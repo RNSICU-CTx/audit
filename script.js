@@ -2,44 +2,54 @@
 const API_BASE = "https://stats-api-nh00.onrender.com";  
 
 //-----------------------------------------
-// 1. Summary tables
+// 1. Combined summary table
 //-----------------------------------------
 fetch(`${API_BASE}/summary`)
   .then(r => r.json())
   .then(data => {
-    const numericTable = document.querySelector("#summaryNumeric tbody");
-    const categoricalTable = document.querySelector("#summaryCategorical tbody");
+    const tbody = document.querySelector("#summaryTable tbody");
 
-    for (const [varName, stats] of Object.entries(data)) {
-      // Numeric
-      if ("mean" in stats) {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${varName}</td>
-          <td>${stats.mean}</td>
-          <td>${stats.median}</td>
-          <td>${stats.std}</td>
-          <td>${stats.iqr}</td>
-          <td>${stats.min}</td>
-          <td>${stats.max}</td>
-          <td>${stats.n}</td>
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+
+      // Continuous variables
+      if (row.type === "continuous") {
+        tr.innerHTML = `
+          <td>${row.variable}</td>
+          <td>${row.type}</td>
+          <td>-</td>
+          <td>${row.mean}</td>
+          <td>${row.median}</td>
+          <td>${row.std}</td>
+          <td>${row.iqr}</td>
+          <td>${row.min}</td>
+          <td>${row.max}</td>
+          <td>${row.n}</td>
+          <td>-</td>
+          <td>-</td>
         `;
-        numericTable.appendChild(row);
-      } 
-      // Categorical
-      else {
-        for (const [cat, vals] of Object.entries(stats)) {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${varName}</td>
-            <td>${cat}</td>
-            <td>${vals.count}</td>
-            <td>${vals.percent}%</td>
-          `;
-          categoricalTable.appendChild(row);
-        }
       }
-    }
+
+      // Categorical variables
+      if (row.type === "categorical") {
+        tr.innerHTML = `
+          <td>${row.variable}</td>
+          <td>${row.type}</td>
+          <td>${row.category}</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>${row.count}</td>
+          <td>${row.percent}%</td>
+        `;
+      }
+
+      tbody.appendChild(tr);
+    });
   });
 
 
@@ -194,3 +204,47 @@ fetch(`${API_BASE}/lm`)
       tbody.appendChild(row);
     });
   });
+
+
+//-----------------------------------------
+// 6. Raw data display (de-identified)
+//-----------------------------------------
+document.getElementById("toggleRaw").addEventListener("click", () => {
+  const container = document.getElementById("rawDataContainer");
+
+  if (container.style.display === "none") {
+    container.style.display = "block";
+
+    // Only fetch once
+    if (!container.dataset.loaded) {
+      fetch(`${API_BASE}/data`)
+        .then(r => r.json())
+        .then(data => {
+          const headerRow = document.getElementById("rawDataHeader");
+          const tbody = document.querySelector("#rawDataTable tbody");
+
+          // Build header
+          Object.keys(data[0]).forEach(col => {
+            const th = document.createElement("th");
+            th.textContent = col;
+            headerRow.appendChild(th);
+          });
+
+          // Build rows
+          data.forEach(row => {
+            const tr = document.createElement("tr");
+            Object.values(row).forEach(val => {
+              const td = document.createElement("td");
+              td.textContent = val;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+
+          container.dataset.loaded = true; // mark as loaded
+        });
+    }
+  } else {
+    container.style.display = "none";
+  }
+});

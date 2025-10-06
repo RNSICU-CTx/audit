@@ -60,12 +60,12 @@
   <h1>Cardiothoracic Surgery Audit Dashboard</h1>
 
   <h2>Summary Statistics</h2>
-
-  <h3>Numeric Variables</h3>
-  <table id="summaryNumeric">
+  <table id="summaryTable">
     <thead>
       <tr>
         <th>Variable</th>
+        <th>Type</th>
+        <th>Category</th>
         <th>Mean</th>
         <th>Median</th>
         <th>Std</th>
@@ -73,17 +73,6 @@
         <th>Min</th>
         <th>Max</th>
         <th>N</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <h3>Categorical Variables</h3>
-  <table id="summaryCategorical">
-    <thead>
-      <tr>
-        <th>Variable</th>
-        <th>Category</th>
         <th>Count</th>
         <th>Percent</th>
       </tr>
@@ -125,3 +114,14 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+<h2>Raw Data (De-identified)</h2>
+<button id="toggleRaw">Show / Hide Raw Data</button>
+<div id="rawDataContainer" style="display:none; margin-top:15px;">
+  <table id="rawDataTable">
+    <thead>
+      <tr id="rawDataHeader"></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
