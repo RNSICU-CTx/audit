@@ -32,20 +32,20 @@
   </table>
 
   <h2>Scatter Plots (Residuals vs Continuous)</h2>
-  <div id="scatterContainer"></div>
+  <div id="scatterPlots"></div>
 
-  <h2>Binned Residuals</h2>
-  <div id="binsContainer"></div>
+  <h2>Binned Residuals (Boxplots)</h2>
+  <div id="binPlots"></div>
 
-  <h2>Categorical Variables</h2>
-  <div id="catContainer"></div>
+  <h2>Categorical Variables (Boxplots)</h2>
+  <div id="catPlots"></div>
 
   <h2>Linear Regression Results</h2>
   <table id="lmTable" class="results-table">
     <thead>
       <tr>
         <th>Variable</th>
-        <th>Estimate</th>
+        <th>Coefficient</th>
         <th>95% CI</th>
         <th>p-value</th>
       </tr>
@@ -57,9 +57,7 @@
   <button id="toggleRaw">Show / Hide Raw Data</button>
   <div id="rawDataContainer" style="display:none; margin-top:15px;">
     <table id="rawDataTable">
-      <thead>
-        <tr id="rawDataHeader"></tr>
-      </thead>
+      <thead><tr id="rawDataHeader"></tr></thead>
       <tbody></tbody>
     </table>
   </div>

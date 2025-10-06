@@ -1,0 +1,121 @@
+/* ===========================
+   Global Layout
+=========================== */
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: #f8f9fa;
+  color: #333;
+}
+
+h1 {
+  color: #003366;
+}
+
+h2, h3 {
+  margin-top: 30px;
+  color: #004080;
+}
+
+/* ===========================
+   General Tables
+=========================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+thead {
+  background: #004080;
+  color: white;
+}
+
+th, td {
+  text-align: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+tbody tr:nth-child(even) {
+  background: #f2f2f2;
+}
+
+tbody tr:hover {
+  background: #e6f2ff;
+}
+
+th {
+  font-weight: bold;
+}
+
+/* ===========================
+   Plot Styling
+=========================== */
+canvas, .plotly-graph-div {
+  margin: 20px 0;
+  max-width: 700px;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* ===========================
+   Regression Results Table
+=========================== */
+.results-table {
+  width: 80%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  font-size: 15px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.results-table thead {
+  background: #003366;
+  color: white;
+  font-weight: bold;
+}
+
+.results-table th, 
+.results-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid #ddd;
+}
+
+.results-table th:first-child,
+.results-table td:first-child {
+  text-align: left;
+}
+
+.results-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.results-table tbody tr:hover {
+  background: #f1f6ff;
+}
+
+.results-table .sig {
+  font-weight: bold;
+  color: #d9534f; /* red for significance */
+}
+
+/* ===========================
+   Raw Data Table
+=========================== */
+#rawDataContainer {
+  margin-top: 20px;
+}
+
+#rawDataTable {
+  font-size: 14px;
+}
