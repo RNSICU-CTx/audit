@@ -1,193 +1,123 @@
 // Render API URL
-const API_BASE = "https://stats-api-nh00.onrender.com";  
+const API_BASE = "https://stats-api-nh00.onrender.com";
 
 //-----------------------------------------
-// 1. Combined summary table
+// 1. Summary Table
 //-----------------------------------------
 fetch(`${API_BASE}/summary`)
   .then(r => r.json())
   .then(data => {
     const tbody = document.querySelector("#summaryTable tbody");
-
     data.forEach(row => {
       const tr = document.createElement("tr");
-
-      // Continuous variables
       if (row.type === "continuous") {
         tr.innerHTML = `
-          <td>${row.variable}</td>
-          <td>${row.type}</td>
-          <td>-</td>
-          <td>${row.mean}</td>
-          <td>${row.median}</td>
-          <td>${row.std}</td>
-          <td>${row.iqr}</td>
-          <td>${row.min}</td>
-          <td>${row.max}</td>
-          <td>${row.n}</td>
-          <td>-</td>
-          <td>-</td>
-        `;
-      }
-
-      // Categorical variables
-      if (row.type === "categorical") {
+          <td>${row.variable}</td><td>${row.type}</td><td>-</td>
+          <td>${row.mean}</td><td>${row.median}</td><td>${row.std}</td>
+          <td>${row.iqr}</td><td>${row.min}</td><td>${row.max}</td>
+          <td>${row.n}</td><td>-</td><td>-</td>`;
+      } else {
         tr.innerHTML = `
-          <td>${row.variable}</td>
-          <td>${row.type}</td>
-          <td>${row.category}</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>${row.count}</td>
-          <td>${row.percent}%</td>
-        `;
+          <td>${row.variable}</td><td>${row.type}</td><td>${row.category}</td>
+          <td>-</td><td>-</td><td>-</td><td>-</td>
+          <td>-</td><td>-</td><td>-</td>
+          <td>${row.count}</td><td>${row.percent}%</td>`;
       }
-
       tbody.appendChild(tr);
     });
   });
 
-
 //-----------------------------------------
-// 2. Scatter plots: pres vs continuous vars
+// 2. Scatter Plots
 //-----------------------------------------
-function makeScatter(canvasId, data, xvar) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
-  const points = data.map(d => ({ x: d[xvar], y: d.pres }));
-
-  new Chart(ctx, {
+function renderScatter(containerId, data, xvar) {
+  const trace = {
+    x: data.map(d => d[xvar]),
+    y: data.map(d => d.pres),
+    mode: "markers",
     type: "scatter",
-    data: {
-      datasets: [{
-        label: `${xvar} vs Residuals`,
-        data: points,
-        backgroundColor: "rgba(54, 162, 235, 0.5)"
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: { display: true, text: `${xvar} vs Pearson Residuals` }
-      },
-      scales: {
-        x: { title: { display: true, text: xvar } },
-        y: { title: { display: true, text: "Residuals" } }
-      }
-    }
-  });
+    marker: { color: "blue", size: 6 },
+    name: `${xvar} vs Residuals`
+  };
+  const layout = {
+    title: `${xvar} vs Pearson Residuals`,
+    xaxis: { title: xvar },
+    yaxis: { title: "Residuals", range: [-4, 4] }
+  };
+  Plotly.newPlot(containerId, [trace], layout);
 }
 
 fetch(`${API_BASE}/scatter`)
   .then(r => r.json())
   .then(data => {
-    makeScatter("scatterAge", data.Age, "Age");
-    makeScatter("scatterLVEF", data.LVEF, "LVEF");
-    makeScatter("scatterAus", data.aus, "aus");
+    renderScatter("scatter-Age", data.Age, "Age");
+    renderScatter("scatter-LVEF", data.LVEF, "LVEF");
+    renderScatter("scatter-aus", data.aus, "aus");
   });
 
-
 //-----------------------------------------
-// 3. Binned mean residual plots
+// 3. Boxplots (Bins & Categoricals)
 //-----------------------------------------
-function makeBinnedBar(canvasId, groupedData, xvar) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
-
-  const labels = groupedData.map(d => d.bin);
-  const means = groupedData.map(d => d.mean);
-  const errors = groupedData.map(d => d.se);
-
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: `Mean Residuals`,
-        data: means,
-        backgroundColor: "rgba(255, 159, 64, 0.6)"
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: { display: true, text: `${xvar} (Binned) vs Residuals` },
-        tooltip: {
-          callbacks: {
-            afterLabel: (ctx) => `SE: ${errors[ctx.dataIndex].toFixed(3)}`
-          }
-        }
+function renderBoxplots(containerId, data, varName) {
+  const traces = [];
+  data.forEach(group => {
+    traces.push({
+      y: group.points,
+      x: Array(group.points.length).fill(group.category),
+      type: "box",
+      name: group.category,
+      boxpoints: false,
+      marker: { color: "lightblue" },
+      line: { color: "darkblue" }
+    });
+    traces.push({
+      y: group.points,
+      x: Array(group.points.length).fill(group.category),
+      mode: "markers",
+      type: "scatter",
+      marker: { size: 5, color: "rgba(0,0,0,0.5)" },
+      showlegend: false
+    });
+    traces.push({
+      y: [group.summary.mean],
+      x: [group.category],
+      mode: "markers+errorbars",
+      type: "scatter",
+      error_y: {
+        type: "data",
+        symmetric: false,
+        array: [group.summary.ci_high - group.summary.mean],
+        arrayminus: [group.summary.mean - group.summary.ci_low],
+        color: "red"
       },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: "Residuals" } }
-      }
-    }
+      marker: { color: "red", size: 8 },
+      showlegend: false
+    });
   });
+  const layout = {
+    title: `Residuals by ${varName}`,
+    yaxis: { range: [-4, 4], zeroline: true },
+    boxmode: "group"
+  };
+  Plotly.newPlot(containerId, traces, layout);
 }
 
+// Bins
 fetch(`${API_BASE}/bins?n_bins=10`)
   .then(r => r.json())
   .then(data => {
-    makeBinnedBar("binsAge", data.Age, "Age");
-    makeBinnedBar("binsLVEF", data.LVEF, "LVEF");
-    makeBinnedBar("binsAus", data.aus, "AusScore");
+    ["Age", "LVEF", "aus"].forEach(v => renderBoxplots(`bins-${v}`, data[v], v));
   });
 
-
-//-----------------------------------------
-// 4. Residuals by categorical vars
-//-----------------------------------------
-function makeCategoricalBar(canvasId, groupedData, xvar) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
-
-  const labels = groupedData.map(d => d[xvar]);
-  const means = groupedData.map(d => d.mean);
-  const errors = groupedData.map(d => d.se);
-
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Mean Residual",
-        data: means,
-        backgroundColor: "rgba(75, 192, 192, 0.6)"
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: { display: true, text: `Residuals by ${xvar}` },
-        tooltip: {
-          callbacks: {
-            afterLabel: (ctx) => `SE: ${errors[ctx.dataIndex].toFixed(3)}`
-          }
-        }
-      },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: "Residuals" } }
-      }
-    }
-  });
-}
-
+// Categoricals
 fetch(`${API_BASE}/categorical`)
   .then(r => r.json())
   .then(data => {
-    makeCategoricalBar("catSex", data.Sex, "Sex");
-    makeCategoricalBar("catNYHA", data.NYHA, "NYHA");
-    makeCategoricalBar("catUrgency", data.urgency, "urgency");
-    makeCategoricalBar("catSurgery", data.surgery, "surgery");
-    makeCategoricalBar("catDiabetes", data.diabetes, "diabetes");
-    makeCategoricalBar("catCKD", data.CKD, "CKD");
+    ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"].forEach(v => renderBoxplots(`cat-${v}`, data[v], v));
   });
 
-
 //-----------------------------------------
-// 5. Linear regression results table
+// 4. Linear regression
 //-----------------------------------------
 fetch(`${API_BASE}/lm`)
   .then(r => r.json())
@@ -197,40 +127,31 @@ fetch(`${API_BASE}/lm`)
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${varName}</td>
-        <td>${data.coef[varName].toFixed(3)}</td>
-        <td>${data.CI_lower[varName].toFixed(3)} – ${data.CI_upper[varName].toFixed(3)}</td>
-        <td>${data.p_value[varName].toExponential(2)}</td>
-      `;
+        <td>${data.coef[varName]}</td>
+        <td>${data.CI_lower[varName]} – ${data.CI_upper[varName]}</td>
+        <td>${data.p_value[varName]}</td>`;
       tbody.appendChild(row);
     });
   });
 
-
 //-----------------------------------------
-// 6. Raw data display (de-identified)
+// 5. Raw data toggle
 //-----------------------------------------
 document.getElementById("toggleRaw").addEventListener("click", () => {
   const container = document.getElementById("rawDataContainer");
-
   if (container.style.display === "none") {
     container.style.display = "block";
-
-    // Only fetch once
     if (!container.dataset.loaded) {
       fetch(`${API_BASE}/data`)
         .then(r => r.json())
         .then(data => {
           const headerRow = document.getElementById("rawDataHeader");
           const tbody = document.querySelector("#rawDataTable tbody");
-
-          // Build header
           Object.keys(data[0]).forEach(col => {
             const th = document.createElement("th");
             th.textContent = col;
             headerRow.appendChild(th);
           });
-
-          // Build rows
           data.forEach(row => {
             const tr = document.createElement("tr");
             Object.values(row).forEach(val => {
@@ -240,8 +161,7 @@ document.getElementById("toggleRaw").addEventListener("click", () => {
             });
             tbody.appendChild(tr);
           });
-
-          container.dataset.loaded = true; // mark as loaded
+          container.dataset.loaded = true;
         });
     }
   } else {
