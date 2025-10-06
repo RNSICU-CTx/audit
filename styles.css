@@ -1,29 +1,34 @@
-/* ===========================
-   Global Layout
-=========================== */
+/* ==========================================================
+   Global Styles
+   ========================================================== */
 body {
   font-family: Arial, sans-serif;
   margin: 20px;
   background: #f8f9fa;
   color: #333;
+  line-height: 1.6;
 }
 
 h1 {
   color: #003366;
+  text-align: left;
+  margin-bottom: 10px;
 }
 
-h2, h3 {
-  margin-top: 30px;
+h2 {
+  margin-top: 35px;
   color: #004080;
+  border-bottom: 2px solid #004080;
+  padding-bottom: 4px;
 }
 
-/* ===========================
-   General Tables
-=========================== */
+/* ==========================================================
+   Tables - Summary, Raw Data, Regression
+   ========================================================== */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 30px;
+  margin: 20px 0 35px 0;
   background: white;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   border-radius: 6px;
@@ -33,6 +38,7 @@ table {
 thead {
   background: #004080;
   color: white;
+  font-weight: bold;
 }
 
 th, td {
@@ -49,29 +55,12 @@ tbody tr:hover {
   background: #e6f2ff;
 }
 
-th {
-  font-weight: bold;
-}
-
-/* ===========================
-   Plot Styling
-=========================== */
-canvas, .plotly-graph-div {
-  margin: 20px 0;
-  max-width: 700px;
-  background: white;
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-/* ===========================
+/* ==========================================================
    Regression Results Table
-=========================== */
+   ========================================================== */
 .results-table {
   width: 80%;
-  margin: 20px auto;
+  margin: 25px auto;
   border-collapse: collapse;
   font-size: 15px;
   background: white;
@@ -84,7 +73,7 @@ canvas, .plotly-graph-div {
   font-weight: bold;
 }
 
-.results-table th, 
+.results-table th,
 .results-table td {
   padding: 10px 12px;
   text-align: right;
@@ -106,16 +95,65 @@ canvas, .plotly-graph-div {
 
 .results-table .sig {
   font-weight: bold;
-  color: #d9534f; /* red for significance */
+  color: #d9534f;
 }
 
-/* ===========================
-   Raw Data Table
-=========================== */
-#rawDataContainer {
-  margin-top: 20px;
+/* ==========================================================
+   Plot Containers
+   ========================================================== */
+.plot-container {
+  margin: 25px 0;
 }
 
-#rawDataTable {
-  font-size: 14px;
+.plot-container > div {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 10px;
+  margin-bottom: 20px;
+  max-width: 700px;
+}
+
+/* ==========================================================
+   Buttons and Interactivity
+   ========================================================== */
+button {
+  background: #004080;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #0059b3;
+}
+
+/* ==========================================================
+   Responsive Design
+   ========================================================== */
+@media (max-width: 768px) {
+  body {
+    margin: 10px;
+  }
+
+  table {
+    font-size: 13px;
+  }
+
+  h1, h2 {
+    text-align: center;
+  }
+
+  .results-table {
+    width: 100%;
+  }
+
+  .plot-container > div {
+    max-width: 100%;
+  }
 }
