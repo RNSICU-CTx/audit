@@ -117,22 +117,48 @@ fetch(`${API_BASE}/categorical`)
   });
 
 //-----------------------------------------
-// 4. Linear regression
+// 5. Linear regression results table
 //-----------------------------------------
 fetch(`${API_BASE}/lm`)
   .then(r => r.json())
   .then(data => {
     const tbody = document.querySelector("#lmTable tbody");
-    Object.keys(data.coef).forEach(varName => {
+    tbody.innerHTML = ""; // clear old rows
+
+    // Define variables in the order we want them shown
+    const vars = [
+      { key: "const", label: "Intercept" },
+      { key: "Age", label: "Age" },
+      { key: "Sex_M", label: "Sex (Male vs Female)" },
+      { key: "diabetes_Yes", label: "Diabetes (Yes vs No)" }
+    ];
+
+    vars.forEach(v => {
       const row = document.createElement("tr");
+
+      const coef = data.coef?.[v.key] ?? "NA";
+      const ciLower = data.CI_lower?.[v.key] ?? "NA";
+      const ciUpper = data.CI_upper?.[v.key] ?? "NA";
+      const pval = data.p_value?.[v.key] ?? "NA";
+
+      // Mark significant p-values (< 0.05)
+      const pvalCell = (pval !== "NA")
+        ? `<td class="${pval < 0.05 ? "sig" : ""}">${pval.toExponential(2)}</td>`
+        : `<td>NA</td>`;
+
       row.innerHTML = `
-        <td>${varName}</td>
-        <td>${data.coef[varName]}</td>
-        <td>${data.CI_lower[varName]} – ${data.CI_upper[varName]}</td>
-        <td>${data.p_value[varName]}</td>`;
+        <td>${v.label}</td>
+        <td>${coef !== "NA" ? coef.toFixed(3) : "NA"}</td>
+        <td>${(ciLower !== "NA" && ciUpper !== "NA") 
+              ? `${ciLower.toFixed(3)} – ${ciUpper.toFixed(3)}` 
+              : "NA"}</td>
+        ${pvalCell}
+      `;
       tbody.appendChild(row);
     });
-  });
+  })
+  .catch(err => console.error("Error loading regression:", err));
+
 
 //-----------------------------------------
 // 5. Raw data toggle
