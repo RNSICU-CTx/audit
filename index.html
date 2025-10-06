@@ -5,91 +5,7 @@
   <title>Cardiothoracic Surgery Audit</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f8f9fa;
-      color: #333;
-    }
-    h1 {
-      color: #003366;
-    }
-    h2, h3 {
-      margin-top: 30px;
-      color: #004080;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-      background: white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    thead {
-      background: #004080;
-      color: white;
-    }
-    th, td {
-      text-align: center;
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    tbody tr:nth-child(even) {
-      background: #f2f2f2;
-    }
-    tbody tr:hover {
-      background: #e6f2ff;
-    }
-    th {
-      font-weight: bold;
-    }
-    canvas {
-      margin: 20px 0;
-      max-width: 700px;
-      background: white;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 6px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-
-    /* Regression results table styling */
-    .results-table {
-      width: 80%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      font-size: 15px;
-      background: white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .results-table thead {
-      background: #003366;
-      color: white;
-      font-weight: bold;
-    }
-    .results-table th, .results-table td {
-      padding: 10px 12px;
-      text-align: right; /* align numbers */
-      border-bottom: 1px solid #ddd;
-    }
-    .results-table th:first-child,
-    .results-table td:first-child {
-      text-align: left; /* variable names left-aligned */
-    }
-    .results-table tbody tr:nth-child(even) {
-      background: #f9f9f9;
-    }
-    .results-table tbody tr:hover {
-      background: #f1f6ff;
-    }
-    .results-table .sig {
-      font-weight: bold;
-      color: #d9534f; /* red for significant p-values */
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Cardiothoracic Surgery Audit Dashboard</h1>
@@ -116,22 +32,13 @@
   </table>
 
   <h2>Scatter Plots (Residuals vs Continuous)</h2>
-  <canvas id="scatterAge"></canvas>
-  <canvas id="scatterLVEF"></canvas>
-  <canvas id="scatterAus"></canvas>
+  <div id="scatterContainer"></div>
 
   <h2>Binned Residuals</h2>
-  <canvas id="binsAge"></canvas>
-  <canvas id="binsLVEF"></canvas>
-  <canvas id="binsAus"></canvas>
+  <div id="binsContainer"></div>
 
   <h2>Categorical Variables</h2>
-  <canvas id="catSex"></canvas>
-  <canvas id="catNYHA"></canvas>
-  <canvas id="catUrgency"></canvas>
-  <canvas id="catSurgery"></canvas>
-  <canvas id="catDiabetes"></canvas>
-  <canvas id="catCKD"></canvas>
+  <div id="catContainer"></div>
 
   <h2>Linear Regression Results</h2>
   <table id="lmTable" class="results-table">
