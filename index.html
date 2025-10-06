@@ -1,12 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Cardiothoracic Surgery Stats</title>
+  <title>Cardiothoracic Surgery Audit Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>Stats Dashboard</h1>
+  <h1>Cardiothoracic Surgery Audit Dashboard</h1>
+
+  <!-- Section 1: Summary -->
+  <h2>Basic Stats (means & std)</h2>
   <canvas id="statsChart" width="400" height="200"></canvas>
+
+  <!-- Section 2: Mortality by Sex -->
+  <h2>Mortality by Sex</h2>
+  <canvas id="mortalitySexChart" width="400" height="200"></canvas>
+
+  <!-- Section 3: Calibration -->
+  <h2>Calibration Plot</h2>
+  <canvas id="calibrationChart" width="400" height="200"></canvas>
+
+  <!-- Section 4: Logistic Regression -->
+  <h2>Logistic Regression: Mortality ~ Age + Sex + Urgency + AusScore</h2>
+  <table id="logitTable" border="1" cellpadding="5">
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Odds Ratio</th>
+        <th>95% CI</th>
+        <th>p-value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- filled dynamically -->
+    </tbody>
+  </table>
+
   <script src="script.js"></script>
 </body>
 </html>
