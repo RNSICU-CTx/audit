@@ -148,52 +148,47 @@ function buildCategorical(vars) {
 }
 
 //-----------------------------------------
-// Linear regression results table (dynamic)
+// Linear regression results
 //-----------------------------------------
-fetch(`${API_BASE}/lm`)
-  .then(r => r.json())
-  .then(data => {
-    const tbody = document.querySelector("#lmTable tbody");
-    tbody.innerHTML = ""; // clear old rows if reloading
+function buildLM() {
+  // Construct query string from selected predictors
+  const query = LM_PREDICTORS.map(p => `predictors=${encodeURIComponent(p)}`).join("&");
+  fetch(`${API_BASE}/lm?${query}`)
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.querySelector("#lmTable tbody");
+      tbody.innerHTML = "";
+      if (!Array.isArray(data) || data.length === 0 || data.error) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td colspan="4">No regression results available</td>`;
+        tbody.appendChild(row);
+        return;
+      }
 
-    if (!Array.isArray(data) || data.length === 0) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="4">No regression results available</td>`;
-      tbody.appendChild(tr);
-      return;
-    }
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        const isSig = row.p_value < 0.05 ? "sig" : "";
+        const ciText = `${row.CI_lower.toFixed(3)} – ${row.CI_upper.toFixed(3)}`;
+        const pText = row.p_value < 0.001 ? "<0.001" : row.p_value.toFixed(3);
 
-    data.forEach(row => {
-      const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.variable}</td>
+          <td>${row.coef.toFixed(3)}</td>
+          <td>${ciText}</td>
+          <td class="${isSig}">${pText}</td>
+        `;
 
-      // Highlight statistically significant p-values
-      const isSignificant = row.p_value < 0.05;
-      const sigClass = isSignificant ? "sig" : "";
-
-      // Format CI and p-values
-      const ci = `${row.CI_lower.toFixed(3)} – ${row.CI_upper.toFixed(3)}`;
-      const pVal = row.p_value < 0.001 
-        ? "<0.001" 
-        : row.p_value.toFixed(3);
-
-      tr.innerHTML = `
-        <td>${row.variable}</td>
-        <td>${row.coef.toFixed(3)}</td>
-        <td>${ci}</td>
-        <td class="${sigClass}">${pVal}</td>
-      `;
-
-      tbody.appendChild(tr);
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(err => {
+      console.error("Error loading regression results:", err);
+      const tbody = document.querySelector("#lmTable tbody");
+      const row = document.createElement("tr");
+      row.innerHTML = `<td colspan="4">Error loading data</td>`;
+      tbody.appendChild(row);
     });
-  })
-  .catch(err => {
-    console.error("Error loading regression results:", err);
-    const tbody = document.querySelector("#lmTable tbody");
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="4">Error loading data</td>`;
-    tbody.appendChild(tr);
-  });
-
+}
 
 //-----------------------------------------
 // Raw data toggle
