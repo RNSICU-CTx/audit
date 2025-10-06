@@ -2,15 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cardiothoracic Surgery Audit</title>
+  <title>Cardiothoracic Surgery Audit Dashboard</title>
   <link rel="icon" type="image/png" href="favicon.png">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <!-- External libraries -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Meta -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
   <h1>Cardiothoracic Surgery Audit Dashboard</h1>
 
+  <!-- ======================== -->
+  <!-- Summary Statistics Table -->
+  <!-- ======================== -->
   <h2>Summary Statistics</h2>
   <table id="summaryTable">
     <thead>
@@ -32,15 +41,27 @@
     <tbody></tbody>
   </table>
 
-  <h2>Scatter Plots (Residuals vs Continuous)</h2>
-  <div id="scatterPlots"></div>
+  <!-- ======================== -->
+  <!-- Residuals vs Continuous  -->
+  <!-- ======================== -->
+  <h2>Scatter Plots (Residuals vs Continuous Variables)</h2>
+  <div id="scatterPlots" class="plot-container"></div>
 
+  <!-- ======================== -->
+  <!-- Binned Residuals         -->
+  <!-- ======================== -->
   <h2>Binned Residuals (Boxplots)</h2>
-  <div id="binPlots"></div>
+  <div id="binPlots" class="plot-container"></div>
 
+  <!-- ======================== -->
+  <!-- Categorical Residuals    -->
+  <!-- ======================== -->
   <h2>Categorical Variables (Boxplots)</h2>
-  <div id="catPlots"></div>
+  <div id="catPlots" class="plot-container"></div>
 
+  <!-- ======================== -->
+  <!-- Linear Regression Output -->
+  <!-- ======================== -->
   <h2>Linear Regression Results</h2>
   <table id="lmTable" class="results-table">
     <thead>
@@ -54,15 +75,22 @@
     <tbody></tbody>
   </table>
 
+  <!-- ======================== -->
+  <!-- Raw Data (De-identified) -->
+  <!-- ======================== -->
   <h2>Raw Data (De-identified)</h2>
   <button id="toggleRaw">Show / Hide Raw Data</button>
+
   <div id="rawDataContainer" style="display:none; margin-top:15px;">
     <table id="rawDataTable">
-      <thead><tr id="rawDataHeader"></tr></thead>
+      <thead>
+        <tr id="rawDataHeader"></tr>
+      </thead>
       <tbody></tbody>
     </table>
   </div>
 
+  <!-- JS -->
   <script src="script.js"></script>
 </body>
 </html>

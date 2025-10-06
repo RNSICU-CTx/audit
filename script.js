@@ -1,44 +1,66 @@
-// -----------------------------
+// ============================================================
+// Cardiothoracic Surgery Audit Dashboard
+// ============================================================
+
+//-------------------------------------------------------------
 // Config
-// -----------------------------
-const API_BASE = "https://stats-api-nh00.onrender.com";  // Set API link
+//-------------------------------------------------------------
+const API_BASE = "https://stats-api-nh00.onrender.com";
+const Y_AXIS_RANGE = [-4, 4]; // consistent y-axis limits
 
-//-----------------------------------------
-// Default variables (placeholder until interactive)
-//-----------------------------------------
-const SUMMARY_VARS = {
-  continuous: ["Age", "LVEF", "aus"], 
-  categorical: ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"]
+// Default variables — can be dynamically replaced later
+const DASHBOARD_VARS = {
+  summary: {
+    continuous: ["Age", "LVEF", "aus"],
+    categorical: ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"]
+  },
+  boxplot: {
+    continuous: ["Age", "LVEF", "aus"],
+    categorical: ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"]
+  },
+  lm: ["Age", "Sex", "diabetes"]
 };
 
-const BOXPLOT_VARS = {
-  continuous: ["Age", "LVEF", "aus"], 
-  categorical: ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"]
-};
+//-------------------------------------------------------------
+// Helper: build query string from params
+//-------------------------------------------------------------
+function buildQuery(params) {
+  return Object.entries(params)
+    .map(([k, v]) =>
+      Array.isArray(v)
+        ? v.map(val => `${k}=${encodeURIComponent(val)}`).join("&")
+        : `${k}=${encodeURIComponent(v)}`
+    )
+    .join("&");
+}
 
-const LM_PREDICTORS = ["Age", "Sex", "diabetes"]; // regression defaults
+//-------------------------------------------------------------
+// Helper: create Plotly plot container + draw plot
+//-------------------------------------------------------------
+function createPlot(containerId, plotId, traces, layout) {
+  const div = document.createElement("div");
+  div.id = plotId;
+  document.getElementById(containerId).appendChild(div);
+  Plotly.newPlot(div.id, traces, layout);
+}
 
-//-----------------------------------------
-// Build dashboard with defaults
-//-----------------------------------------
-buildSummary(SUMMARY_VARS);
-buildScatter(BOXPLOT_VARS.continuous);
-buildBins(BOXPLOT_VARS.continuous);
-buildCategorical(BOXPLOT_VARS.categorical);
-buildLM(SUMMARY_VARS);  // regression still tied to a subset
-setupRawData();
-
-//-----------------------------------------
-// Summary Table
-//-----------------------------------------
+//-------------------------------------------------------------
+// Summary Statistics Table
+//-------------------------------------------------------------
 function buildSummary(vars) {
-  fetch(`${API_BASE}/summary?vars=${vars.continuous.concat(vars.categorical).join("&vars=")}`)
+  const query = buildQuery({
+    vars: vars.continuous.concat(vars.categorical)
+  });
+
+  fetch(`${API_BASE}/summary?${query}`)
     .then(r => r.json())
     .then(data => {
       const tbody = document.querySelector("#summaryTable tbody");
       tbody.innerHTML = "";
+
       data.forEach(row => {
         const tr = document.createElement("tr");
+
         if (row.type === "continuous") {
           tr.innerHTML = `
             <td>${row.variable}</td><td>${row.type}</td><td>-</td>
@@ -53,51 +75,48 @@ function buildSummary(vars) {
         }
         tbody.appendChild(tr);
       });
-    });
+    })
+    .catch(err => console.error("Error loading summary:", err));
 }
 
-//-----------------------------------------
-// Scatter Plots
-//-----------------------------------------
+//-------------------------------------------------------------
+// Scatter Plots (Residuals vs Continuous Variables)
+//-------------------------------------------------------------
 function buildScatter(vars) {
   vars.forEach(v => {
     fetch(`${API_BASE}/scatter?var=${v}`)
       .then(r => r.json())
       .then(data => {
-        const div = document.createElement("div");
-        div.id = `scatter-${v}`;
-        document.getElementById("scatterPlots").appendChild(div);
-
         const trace = {
           x: data.points.map(p => p[v]),
           y: data.points.map(p => p.pres),
           mode: "markers",
           type: "scatter",
-          name: `${v}`
+          name: v,
+          marker: { opacity: 0.7 }
         };
 
-        Plotly.newPlot(div.id, [trace], {
+        const layout = {
           title: `${v} vs Residuals`,
           xaxis: { title: v },
-          yaxis: { title: "Residuals", range: [-4, 4] }
-        });
-      });
+          yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
+        };
+
+        createPlot("scatterPlots", `scatter-${v}`, [trace], layout);
+      })
+      .catch(err => console.error(`Error building scatter for ${v}:`, err));
   });
 }
 
-//-----------------------------------------
-// Binned residuals as boxplots
-//-----------------------------------------
+//-------------------------------------------------------------
+// Binned Residuals (Boxplots)
+//-------------------------------------------------------------
 function buildBins(vars) {
   vars.forEach(v => {
     fetch(`${API_BASE}/bins?var=${v}&n_bins=10`)
       .then(r => r.json())
       .then(data => {
         if (data.error) return;
-
-        const div = document.createElement("div");
-        div.id = `bins-${v}`;
-        document.getElementById("binPlots").appendChild(div);
 
         const trace = {
           x: data.bins.map(b => b.bin),
@@ -108,27 +127,26 @@ function buildBins(vars) {
           name: v
         };
 
-        Plotly.newPlot(div.id, [trace], {
+        const layout = {
           title: `${v} (Binned) vs Residuals`,
-          yaxis: { title: "Residuals", range: [-4, 4] }
-        });
-      });
+          yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
+        };
+
+        createPlot("binPlots", `bins-${v}`, [trace], layout);
+      })
+      .catch(err => console.error(`Error building bins for ${v}:`, err));
   });
 }
 
-//-----------------------------------------
-// Categorical residuals as boxplots
-//-----------------------------------------
+//-------------------------------------------------------------
+// Categorical Residuals (Boxplots)
+//-------------------------------------------------------------
 function buildCategorical(vars) {
   vars.forEach(v => {
     fetch(`${API_BASE}/categorical?var=${v}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) return;
-
-        const div = document.createElement("div");
-        div.id = `cat-${v}`;
-        document.getElementById("catPlots").appendChild(div);
 
         const trace = {
           x: data.categories.map(c => c.category),
@@ -139,33 +157,48 @@ function buildCategorical(vars) {
           name: v
         };
 
-        Plotly.newPlot(div.id, [trace], {
+        const layout = {
           title: `Residuals by ${v}`,
-          yaxis: { title: "Residuals", range: [-4, 4] }
-        });
-      });
+          yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
+        };
+
+        createPlot("catPlots", `cat-${v}`, [trace], layout);
+      })
+      .catch(err => console.error(`Error building categorical for ${v}:`, err));
   });
 }
 
-//-----------------------------------------
-// Linear regression results
-//-----------------------------------------
+//-------------------------------------------------------------
+// Linear Regression Results Table
+//-------------------------------------------------------------
 function buildLM() {
-  // Construct query string from selected predictors
-  const query = LM_PREDICTORS.map(p => `predictors=${encodeURIComponent(p)}`).join("&");
+  const query = buildQuery({ predictors: DASHBOARD_VARS.lm });
+
   fetch(`${API_BASE}/lm?${query}`)
     .then(r => r.json())
     .then(data => {
       const tbody = document.querySelector("#lmTable tbody");
       tbody.innerHTML = "";
-      if (!Array.isArray(data) || data.length === 0 || data.error) {
+
+      if (!data || data.error) {
         const row = document.createElement("tr");
         row.innerHTML = `<td colspan="4">No regression results available</td>`;
         tbody.appendChild(row);
         return;
       }
 
-      data.forEach(row => {
+      // Handle both dict-style and list-style responses
+      const rows = Array.isArray(data)
+        ? data
+        : Object.keys(data.coef || {}).map(v => ({
+            variable: v,
+            coef: data.coef[v],
+            CI_lower: data.CI_lower[v],
+            CI_upper: data.CI_upper[v],
+            p_value: data.p_value[v]
+          }));
+
+      rows.forEach(row => {
         const tr = document.createElement("tr");
         const isSig = row.p_value < 0.05 ? "sig" : "";
         const ciText = `${row.CI_lower.toFixed(3)} – ${row.CI_upper.toFixed(3)}`;
@@ -175,9 +208,7 @@ function buildLM() {
           <td>${row.variable}</td>
           <td>${row.coef.toFixed(3)}</td>
           <td>${ciText}</td>
-          <td class="${isSig}">${pText}</td>
-        `;
-
+          <td class="${isSig}">${pText}</td>`;
         tbody.appendChild(tr);
       });
     })
@@ -190,25 +221,31 @@ function buildLM() {
     });
 }
 
-//-----------------------------------------
-// Raw data toggle
-//-----------------------------------------
+//-------------------------------------------------------------
+// Raw Data Toggle (De-identified)
+//-------------------------------------------------------------
 function setupRawData() {
   document.getElementById("toggleRaw").addEventListener("click", () => {
     const container = document.getElementById("rawDataContainer");
+
     if (container.style.display === "none") {
       container.style.display = "block";
+
       if (!container.dataset.loaded) {
         fetch(`${API_BASE}/data`)
           .then(r => r.json())
           .then(data => {
             const headerRow = document.getElementById("rawDataHeader");
             const tbody = document.querySelector("#rawDataTable tbody");
+
+            // Build headers
             Object.keys(data[0]).forEach(col => {
               const th = document.createElement("th");
               th.textContent = col;
               headerRow.appendChild(th);
             });
+
+            // Build rows
             data.forEach(row => {
               const tr = document.createElement("tr");
               Object.values(row).forEach(val => {
@@ -218,11 +255,27 @@ function setupRawData() {
               });
               tbody.appendChild(tr);
             });
+
             container.dataset.loaded = true;
-          });
+          })
+          .catch(err => console.error("Error loading raw data:", err));
       }
     } else {
       container.style.display = "none";
     }
   });
 }
+
+//-------------------------------------------------------------
+// Initialize Dashboard
+//-------------------------------------------------------------
+function initDashboard() {
+  buildSummary(DASHBOARD_VARS.summary);
+  buildScatter(DASHBOARD_VARS.boxplot.continuous);
+  buildBins(DASHBOARD_VARS.boxplot.continuous);
+  buildCategorical(DASHBOARD_VARS.boxplot.categorical);
+  buildLM();
+  setupRawData();
+}
+
+initDashboard();
