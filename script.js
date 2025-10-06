@@ -148,26 +148,52 @@ function buildCategorical(vars) {
 }
 
 //-----------------------------------------
-// Linear regression results
+// Linear regression results table (dynamic)
 //-----------------------------------------
-function buildLM(vars) {
-  fetch(`${API_BASE}/lm?${LM_PREDICTORS.map(p => `predictors=${p}`).join("&")}`)
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) return;
-      const tbody = document.querySelector("#lmTable tbody");
-      tbody.innerHTML = "";
-      Object.keys(data.coef).forEach(varName => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${varName}</td>
-          <td>${data.coef[varName].toFixed(3)}</td>
-          <td>${data.CI_lower[varName].toFixed(3)} – ${data.CI_upper[varName].toFixed(3)}</td>
-          <td>${data.p_value[varName].toExponential(2)}</td>`;
-        tbody.appendChild(row);
-      });
+fetch(`${API_BASE}/lm`)
+  .then(r => r.json())
+  .then(data => {
+    const tbody = document.querySelector("#lmTable tbody");
+    tbody.innerHTML = ""; // clear old rows if reloading
+
+    if (!Array.isArray(data) || data.length === 0) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="4">No regression results available</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+
+      // Highlight statistically significant p-values
+      const isSignificant = row.p_value < 0.05;
+      const sigClass = isSignificant ? "sig" : "";
+
+      // Format CI and p-values
+      const ci = `${row.CI_lower.toFixed(3)} – ${row.CI_upper.toFixed(3)}`;
+      const pVal = row.p_value < 0.001 
+        ? "<0.001" 
+        : row.p_value.toFixed(3);
+
+      tr.innerHTML = `
+        <td>${row.variable}</td>
+        <td>${row.coef.toFixed(3)}</td>
+        <td>${ci}</td>
+        <td class="${sigClass}">${pVal}</td>
+      `;
+
+      tbody.appendChild(tr);
     });
-}
+  })
+  .catch(err => {
+    console.error("Error loading regression results:", err);
+    const tbody = document.querySelector("#lmTable tbody");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="4">Error loading data</td>`;
+    tbody.appendChild(tr);
+  });
+
 
 //-----------------------------------------
 // Raw data toggle
