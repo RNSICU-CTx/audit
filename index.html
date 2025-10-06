@@ -1,38 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Cardiothoracic Surgery Audit Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Cardiothoracic Surgery Audit</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      color: #003366;
+    }
+    h2, h3 {
+      margin-top: 30px;
+      color: #004080;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    thead {
+      background: #004080;
+      color: white;
+    }
+    th, td {
+      text-align: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    tbody tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+    tbody tr:hover {
+      background: #e6f2ff;
+    }
+    th {
+      font-weight: bold;
+    }
+    canvas {
+      margin: 20px 0;
+      max-width: 700px;
+      background: white;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+  </style>
 </head>
 <body>
   <h1>Cardiothoracic Surgery Audit Dashboard</h1>
 
-  <!-- Section 1: Summary -->
-  <h2>Basic Stats (means & std)</h2>
-  <canvas id="statsChart" width="400" height="200"></canvas>
+  <h2>Summary Statistics</h2>
 
-  <!-- Section 2: Mortality by Sex -->
-  <h2>Mortality by Sex</h2>
-  <canvas id="mortalitySexChart" width="400" height="200"></canvas>
-
-  <!-- Section 3: Calibration -->
-  <h2>Calibration Plot</h2>
-  <canvas id="calibrationChart" width="400" height="200"></canvas>
-
-  <!-- Section 4: Logistic Regression -->
-  <h2>Logistic Regression: Mortality ~ Age + Sex + Urgency + AusScore</h2>
-  <table id="logitTable" border="1" cellpadding="5">
+  <h3>Numeric Variables</h3>
+  <table id="summaryNumeric">
     <thead>
       <tr>
         <th>Variable</th>
-        <th>Odds Ratio</th>
+        <th>Mean</th>
+        <th>Median</th>
+        <th>Std</th>
+        <th>IQR</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>N</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>Categorical Variables</h3>
+  <table id="summaryCategorical">
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Category</th>
+        <th>Count</th>
+        <th>Percent</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Scatter Plots (Residuals vs Continuous)</h2>
+  <canvas id="scatterAge"></canvas>
+  <canvas id="scatterLVEF"></canvas>
+  <canvas id="scatterAus"></canvas>
+
+  <h2>Binned Residuals</h2>
+  <canvas id="binsAge"></canvas>
+  <canvas id="binsLVEF"></canvas>
+  <canvas id="binsAus"></canvas>
+
+  <h2>Categorical Variables</h2>
+  <canvas id="catSex"></canvas>
+  <canvas id="catNYHA"></canvas>
+  <canvas id="catUrgency"></canvas>
+  <canvas id="catSurgery"></canvas>
+  <canvas id="catDiabetes"></canvas>
+  <canvas id="catCKD"></canvas>
+
+  <h2>Linear Regression Results</h2>
+  <table id="lmTable">
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Coefficient</th>
         <th>95% CI</th>
         <th>p-value</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- filled dynamically -->
-    </tbody>
+    <tbody></tbody>
   </table>
 
   <script src="script.js"></script>
