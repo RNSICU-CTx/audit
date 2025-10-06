@@ -1,5 +1,5 @@
 // Render API URL
-const API_BASE = "https://YOUR_API_URL";  
+const API_BASE = "https://stats-api-nh00.onrender.com";  
 
 // --------------------
 // 1. Basic stats chart
