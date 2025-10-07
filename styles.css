@@ -1,9 +1,9 @@
 /* ==========================================================
-   Global Styles
+   Global / Typography
    ========================================================== */
 body {
   font-family: Arial, sans-serif;
-  margin: 20px;
+  margin: 0;                 /* changed: avoid header offset issues */
   background: #f8f9fa;
   color: #333;
   line-height: 1.6;
@@ -22,169 +22,8 @@ h2 {
   padding-bottom: 4px;
 }
 
-
 /* ==========================================================
-   Webpage - Top bar, sidebar
-   ========================================================== */
-
-.logosec {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.logo {
-    font-size: 27px;
-    font-weight: 600;
-    color: #004080;
-}
-
-.icn {
-    height: 30px;
-}
-
-.menuicn {
-    cursor: pointer;
-}
-
-
-/* ==========================================================
-   Tables - Summary, Raw Data, Regression
-   ========================================================== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 20px 0 35px 0;
-  background: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-thead {
-  background: #004080;
-  color: white;
-  font-weight: bold;
-}
-
-th, td {
-  text-align: center;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-tbody tr:nth-child(even) {
-  background: #f2f2f2;
-}
-
-tbody tr:hover {
-  background: #e6f2ff;
-}
-
-/* ==========================================================
-   Regression Results Table
-   ========================================================== */
-.results-table {
-  width: 80%;
-  margin: 25px auto;
-  border-collapse: collapse;
-  font-size: 15px;
-  background: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.results-table thead {
-  background: #003366;
-  color: white;
-  font-weight: bold;
-}
-
-.results-table th,
-.results-table td {
-  padding: 10px 12px;
-  text-align: right;
-  border-bottom: 1px solid #ddd;
-}
-
-.results-table th:first-child,
-.results-table td:first-child {
-  text-align: left;
-}
-
-.results-table tbody tr:nth-child(even) {
-  background: #f9f9f9;
-}
-
-.results-table tbody tr:hover {
-  background: #f1f6ff;
-}
-
-.results-table .sig {
-  font-weight: bold;
-  color: #d9534f;
-}
-
-/* ==========================================================
-   Plot Containers
-   ========================================================== */
-.plot-container {
-  margin: 25px 0;
-}
-
-.plot-container > div {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  padding: 10px;
-  margin-bottom: 20px;
-  max-width: 700px;
-}
-
-/* ==========================================================
-   Buttons and Interactivity
-   ========================================================== */
-button {
-  background: #004080;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 15px;
-  transition: background 0.2s;
-}
-
-button:hover {
-  background: #0059b3;
-}
-
-/* ==========================================================
-   Responsive Design
-   ========================================================== */
-@media (max-width: 768px) {
-  body {
-    margin: 10px;
-  }
-
-  table {
-    font-size: 13px;
-  }
-
-  h1, h2 {
-    text-align: center;
-  }
-
-  .results-table {
-    width: 100%;
-  }
-
-  .plot-container > div {
-    max-width: 100%;
-  }
-
-  /* ==========================================================
-   Header
+   Header (fixed)
    ========================================================== */
 .top-header {
   position: fixed;
@@ -220,15 +59,16 @@ button:hover {
 }
 
 /* ==========================================================
-   Sidebar
+   Layout: Dashboard, Sidebar, Main content
    ========================================================== */
 .dashboard {
   display: flex;
   min-height: 100vh;
   background: #f8f9fa;
-  margin-top: 60px; /* Space for header */
+  margin-top: 60px; /* reserve place for header */
 }
 
+/* Sidebar */
 .sidebar {
   width: 240px;
   background-color: #00264d;
@@ -241,51 +81,64 @@ button:hover {
   bottom: 0;
   left: 0;
   overflow-y: auto;
-  transition: width 0.3s ease;
+  transition: width 0.28s ease, left 0.28s ease;
+  z-index: 900;
 }
 
+/* Collapsed (desktop) */
 .sidebar.collapsed {
   width: 60px;
 }
 
+/* When collapsed hide the text but keep icons */
 .sidebar.collapsed .sidebar-header h2,
 .sidebar.collapsed .sidebar-nav a span {
   display: none;
 }
 
+/* Sidebar header / logo */
 .sidebar-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
-
 .sidebar-logo {
   width: 40px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
+/* Nav */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 10px;
+  gap: 6px;
+  padding: 0 8px;
 }
-
 .sidebar-nav a {
   color: #cfd8dc;
   text-decoration: none;
   font-weight: 500;
-  padding: 10px 15px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.18s, color 0.18s;
 }
 
+/* icon styling inside link */
+.sidebar-nav a i {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+/* hover + active */
 .sidebar-nav a:hover {
   background: #004080;
   color: #fff;
 }
-
 .sidebar-nav a.active {
   background: #0059b3;
   color: #fff;
@@ -298,32 +151,136 @@ button:hover {
   flex: 1;
   margin-left: 240px;
   padding: 25px 40px;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.28s ease;
 }
 
+/* when sidebar is collapsed, nudge main content left */
 .sidebar.collapsed ~ .main-content {
   margin-left: 60px;
 }
 
-/* Smooth scroll for navigation */
-html {
-  scroll-behavior: smooth;
+/* ==========================================================
+   Tables - Summary, Raw Data, Regression
+   ========================================================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0 35px 0;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-/* Responsive */
+thead {
+  background: #004080;
+  color: white;
+  font-weight: bold;
+}
+
+th, td {
+  text-align: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+tbody tr:nth-child(even) {
+  background: #f2f2f2;
+}
+tbody tr:hover {
+  background: #e6f2ff;
+}
+
+/* ==========================================================
+   Regression Results Table (special)
+   ========================================================== */
+.results-table {
+  width: 80%;
+  margin: 25px auto;
+  border-collapse: collapse;
+  font-size: 15px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.results-table thead {
+  background: #003366;
+}
+.results-table th, .results-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid #ddd;
+}
+.results-table th:first-child, .results-table td:first-child {
+  text-align: left;
+}
+.results-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+.results-table .sig {
+  font-weight: bold;
+  color: #d9534f;
+}
+
+/* ==========================================================
+   Plot Containers
+   ========================================================== */
+.plot-container {
+  margin: 25px 0;
+}
+
+.plot-container > div {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 10px;
+  margin-bottom: 20px;
+  max-width: 700px;
+}
+
+/* ==========================================================
+   Buttons & Interactivity
+   ========================================================== */
+button {
+  background: #004080;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #0059b3;
+}
+
+/* ==========================================================
+   Responsive tweaks (mobile)
+   - mobile sidebar slides in/out; main content margin resets
+   ========================================================== */
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
-    width: 200px;
-    left: -200px;
-    transition: left 0.3s ease;
+    width: 240px;
+    left: -240px;
+    top: 60px;
+    bottom: 0;
+    transition: left 0.28s ease;
   }
   .sidebar.open {
     left: 0;
   }
   .main-content {
     margin-left: 0;
+    padding: 18px;
   }
+  /* reduce plot/table max width on small screens */
+  .plot-container > div { max-width: 100%; }
+  .results-table { width: 100%; }
+  table { font-size: 13px; }
 }
 
-}
+/* Smooth scroll for navigation */
+html { scroll-behavior: smooth; }

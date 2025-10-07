@@ -267,41 +267,38 @@ function setupRawData() {
 }
 
 //-------------------------------------------------------------
-// Initialize Dashboard
+// Initialize Everything After DOM Loads
 //-------------------------------------------------------------
-function initDashboard() {
-  buildSummary(DASHBOARD_VARS.summary);
-  buildScatter(DASHBOARD_VARS.boxplot.continuous);
-  buildBins(DASHBOARD_VARS.boxplot.continuous);
-  buildCategorical(DASHBOARD_VARS.boxplot.categorical);
-  buildLM();
-  setupRawData();
-}
-
-initDashboard();
-
-
-// Sidebar toggle
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize dashboard visuals & data
+  initDashboard();
+
+  // Initialize lucide icons (render <i data-lucide="..."> into SVGs)
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
+  }
+
+  // Sidebar toggle logic
   const sidebar = document.getElementById("sidebar");
   const toggle = document.getElementById("menuToggle");
 
-  toggle.addEventListener("click", () => {
-    if (window.innerWidth < 900) {
-      sidebar.classList.toggle("open");
-    } else {
-      sidebar.classList.toggle("collapsed");
-    }
-  });
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", () => {
+      if (window.innerWidth < 900) {
+        sidebar.classList.toggle("open");
+      } else {
+        sidebar.classList.toggle("collapsed");
+      }
+    });
+  }
 
-  // Active link highlighting
+  // Active link highlighting + auto-close on mobile
   const links = document.querySelectorAll(".sidebar-nav a");
   links.forEach(link => {
     link.addEventListener("click", () => {
       links.forEach(l => l.classList.remove("active"));
       link.classList.add("active");
 
-      // Close sidebar on mobile after navigation
       if (window.innerWidth < 900) {
         sidebar.classList.remove("open");
       }
