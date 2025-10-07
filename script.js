@@ -269,6 +269,19 @@ function setupRawData() {
 //-------------------------------------------------------------
 // Initialize Everything After DOM Loads
 //-------------------------------------------------------------
+
+//-------------------------------------------------------------
+// Initialize Dashboard (define globally before DOMContentLoaded)
+//-------------------------------------------------------------
+function initDashboard() {
+  buildSummary(DASHBOARD_VARS.summary);
+  buildScatter(DASHBOARD_VARS.boxplot.continuous);
+  buildBins(DASHBOARD_VARS.boxplot.continuous);
+  buildCategorical(DASHBOARD_VARS.boxplot.categorical);
+  buildLM();
+  setupRawData();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize dashboard visuals & data
   initDashboard();
