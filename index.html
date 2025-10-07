@@ -15,94 +15,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-
-  <header>
-    <div class="logosec">
-      <img src="favicon.png" class="icn menuicn" id="menuicn" alt="menu-icon" />
-      <div class="logo">Cardiothoracic Surgery Audit Dashboard</div>
+  <!-- Header -->
+  <header class="top-header">
+    <div class="header-left">
+      <img src="favicon.png" id="menuToggle" class="menu-icon" alt="menu icon" />
+      <div class="logo-text">Cardiothoracic Surgery Audit Dashboard</div>
     </div>
   </header>
 
-  <h1>Key Findings & Overview</h1>
-  <h2>TBD</h2>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <img src="favicon.png" alt="logo" class="sidebar-logo">
+        <h2>Audit Dashboard</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#overview">Overview</a>
+        <a href="#summary">Summary Stats</a>
+        <a href="#scatter">Scatter Plots</a>
+        <a href="#bins">Binned Residuals</a>
+        <a href="#categorical">Categorical Plots</a>
+        <a href="#lm">Linear Models</a>
+        <a href="#raw">Raw Data</a>
+      </nav>
+    </aside>
 
+    <!-- Main Content -->
+    <main class="main-content">
+      <section id="overview">
+        <h1>Key Findings & Overview</h1>
+        <h2>TBD</h2>
+      </section>
 
-  <h1>Descriptive Statistics</h1>
+      <section id="summary">
+        <h1>Descriptive Statistics</h1>
+        <h2>Summary Statistics</h2>
+        <table id="summaryTable">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Mean</th>
+              <th>Median</th>
+              <th>Std</th>
+              <th>IQR</th>
+              <th>Min</th>
+              <th>Max</th>
+              <th>N</th>
+              <th>Count</th>
+              <th>Percent</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
 
-  <!-- ======================== -->
-  <!-- Summary Statistics Table -->
-  <!-- ======================== -->
-  <h2>Summary Statistics</h2>
-  <table id="summaryTable">
-    <thead>
-      <tr>
-        <th>Variable</th>
-        <th>Type</th>
-        <th>Category</th>
-        <th>Mean</th>
-        <th>Median</th>
-        <th>Std</th>
-        <th>IQR</th>
-        <th>Min</th>
-        <th>Max</th>
-        <th>N</th>
-        <th>Count</th>
-        <th>Percent</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+      <section id="scatter">
+        <h2>Scatter Plots (Residuals vs Continuous Variables)</h2>
+        <div id="scatterPlots" class="plot-container"></div>
+      </section>
 
-  <!-- ======================== -->
-  <!-- Residuals vs Continuous  -->
-  <!-- ======================== -->
-  <h2>Scatter Plots (Residuals vs Continuous Variables)</h2>
-  <div id="scatterPlots" class="plot-container"></div>
+      <section id="bins">
+        <h2>Binned Residuals (Boxplots)</h2>
+        <div id="binPlots" class="plot-container"></div>
+      </section>
 
-  <!-- ======================== -->
-  <!-- Binned Residuals         -->
-  <!-- ======================== -->
-  <h2>Binned Residuals (Boxplots)</h2>
-  <div id="binPlots" class="plot-container"></div>
+      <section id="categorical">
+        <h2>Categorical Variables (Boxplots)</h2>
+        <div id="catPlots" class="plot-container"></div>
+      </section>
 
-  <!-- ======================== -->
-  <!-- Categorical Residuals    -->
-  <!-- ======================== -->
-  <h2>Categorical Variables (Boxplots)</h2>
-  <div id="catPlots" class="plot-container"></div>
+      <section id="lm">
+        <h2>Linear Regression Results</h2>
+        <table id="lmTable" class="results-table">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Coefficient</th>
+              <th>95% CI</th>
+              <th>p-value</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
 
-  <!-- ======================== -->
-  <!-- Linear Regression Output -->
-  <!-- ======================== -->
-  <h2>Linear Regression Results</h2>
-  <table id="lmTable" class="results-table">
-    <thead>
-      <tr>
-        <th>Variable</th>
-        <th>Coefficient</th>
-        <th>95% CI</th>
-        <th>p-value</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <!-- ======================== -->
-  <!-- Raw Data (De-identified) -->
-  <!-- ======================== -->
-  <h1>Raw Data (De-identified)</h1>
-  <button id="toggleRaw">Show / Hide Raw Data</button>
-
-  <div id="rawDataContainer" style="display:none; margin-top:15px;">
-    <table id="rawDataTable">
-      <thead>
-        <tr id="rawDataHeader"></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <section id="raw">
+        <h1>Raw Data (De-identified)</h1>
+        <button id="toggleRaw">Show / Hide Raw Data</button>
+        <div id="rawDataContainer" style="display:none; margin-top:15px;">
+          <table id="rawDataTable">
+            <thead><tr id="rawDataHeader"></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- JS -->
   <script src="script.js"></script>
 </body>
-</html>

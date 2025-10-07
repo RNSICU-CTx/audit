@@ -182,4 +182,148 @@ button:hover {
   .plot-container > div {
     max-width: 100%;
   }
+
+  /* ==========================================================
+   Header
+   ========================================================== */
+.top-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #004080;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-icon {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  filter: invert(1);
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ==========================================================
+   Sidebar
+   ========================================================== */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #f8f9fa;
+  margin-top: 60px; /* Space for header */
+}
+
+.sidebar {
+  width: 240px;
+  background-color: #00264d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  position: fixed;
+  top: 60px; /* below header */
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar.collapsed .sidebar-header h2,
+.sidebar.collapsed .sidebar-nav a span {
+  display: none;
+}
+
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  margin-bottom: 10px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+.sidebar-nav a {
+  color: #cfd8dc;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-nav a:hover {
+  background: #004080;
+  color: #fff;
+}
+
+.sidebar-nav a.active {
+  background: #0059b3;
+  color: #fff;
+}
+
+/* ==========================================================
+   Main Content
+   ========================================================== */
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 25px 40px;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed ~ .main-content {
+  margin-left: 60px;
+}
+
+/* Smooth scroll for navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    width: 200px;
+    left: -200px;
+    transition: left 0.3s ease;
+  }
+  .sidebar.open {
+    left: 0;
+  }
+  .main-content {
+    margin-left: 0;
+  }
+}
+
 }
