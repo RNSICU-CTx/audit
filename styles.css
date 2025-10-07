@@ -22,6 +22,32 @@ h2 {
   padding-bottom: 4px;
 }
 
+
+/* ==========================================================
+   Webpage - Top bar, sidebar
+   ========================================================== */
+
+.logosec {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo {
+    font-size: 27px;
+    font-weight: 600;
+    color: rgb(47, 141, 70);
+}
+
+.icn {
+    height: 30px;
+}
+
+.menuicn {
+    cursor: pointer;
+}
+
+
 /* ==========================================================
    Tables - Summary, Raw Data, Regression
    ========================================================== */
