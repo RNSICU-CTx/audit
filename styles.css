@@ -191,6 +191,57 @@ tbody tr:hover {
   background: #e6f2ff;
 }
 
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.summary-table th {
+  background: #004080;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+}
+
+.summary-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.summary-table .cont-var {
+  font-weight: bold;
+  text-align: left;
+}
+
+.summary-table .cat-var {
+  font-weight: bold;
+  text-align: left;
+  padding-left: 10px;
+}
+
+.summary-table .cat-level {
+  text-align: left;
+  padding-left: 30px;
+  font-style: italic;
+  color: #333;
+}
+
+.summary-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.summary-table tbody tr:hover {
+  background: #f1f6ff;
+}
+
+
 /* ==========================================================
    Regression Results Table (special)
    ========================================================== */
