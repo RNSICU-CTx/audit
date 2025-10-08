@@ -150,7 +150,7 @@ function buildCategorical(vars) {
 
         const trace = {
           x: data.categories.map(c => c.category),
-          y: data.categories.flatMap(c => c.points),
+          y: data.categories.flatMap(c => numpy.log(c.points)),
           type: "box",
           boxpoints: "all",
           jitter: 0.4,
