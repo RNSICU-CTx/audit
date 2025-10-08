@@ -118,9 +118,13 @@ function buildBins(vars) {
       .then(data => {
         if (data.error) return;
 
+        // Flatten points and replicate bin labels for each point
+        const x = data.bins.flatMap(b => Array(b.points.length).fill(b.bin));
+        const y = data.bins.flatMap(b => b.points);
+
         const trace = {
-          x: data.bins.map(b => b.bin),
-          y: data.bins.flatMap(b => b.points),
+          x: x,
+          y: y,
           type: "box",
           boxpoints: "all",
           jitter: 0.4,
