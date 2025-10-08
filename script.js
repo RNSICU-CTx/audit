@@ -48,33 +48,32 @@ function createPlot(containerId, plotId, traces, layout) {
 // Summary Statistics Table
 //-------------------------------------------------------------
 function buildSummary(vars) {
-  // Clear existing table
+  // Flatten continuous + categorical variables
+  const allVars = [...(vars.continuous || []), ...(vars.categorical || [])];
+
   const container = document.getElementById("summaryTableContainer");
   container.innerHTML = "";
 
-  // Fetch summary data from backend
   const query = new URLSearchParams();
-  vars.forEach(v => query.append("vars", v));
+  allVars.forEach(v => query.append("vars", v));
 
   fetch(`${API_BASE}/summary?${query.toString()}`)
     .then(r => r.json())
     .then(data => {
       if (!data || data.length === 0) return;
 
-      // Get group columns dynamically
+      // Detect group columns dynamically (e.g., Alive, Dead, Total)
       const groupCols = Object.keys(data[0]).filter(k => !["variable","type","level"].includes(k));
 
-      // Build table
       const table = document.createElement("table");
       table.classList.add("summary-table");
 
       // Header
       const thead = document.createElement("thead");
       const trHead = document.createElement("tr");
-
-      const thVar = document.createElement("th");
-      thVar.textContent = "";
-      trHead.appendChild(thVar);
+      const thEmpty = document.createElement("th");
+      thEmpty.textContent = "";
+      trHead.appendChild(thEmpty);
 
       groupCols.forEach(g => {
         const th = document.createElement("th");
@@ -90,30 +89,23 @@ function buildSummary(vars) {
       data.forEach(row => {
         const tr = document.createElement("tr");
 
+        // Variable / Level column
+        const tdVar = document.createElement("td");
         if (row.type === "continuous") {
-          const tdVar = document.createElement("td");
           tdVar.textContent = row.variable;
           tdVar.classList.add("cont-var");
-          tr.appendChild(tdVar);
-
-          groupCols.forEach(g => {
-            const td = document.createElement("td");
-            td.textContent = row[g];
-            tr.appendChild(td);
-          });
-
         } else if (row.type === "categorical") {
-          const tdVar = document.createElement("td");
-          tdVar.textContent = row.variable;
-          tdVar.classList.add(row.variable ? "cat-var" : "cat-level"); // only first level shows var name
-          tr.appendChild(tdVar);
-
-          groupCols.forEach(g => {
-            const td = document.createElement("td");
-            td.textContent = row[g];
-            tr.appendChild(td);
-          });
+          tdVar.textContent = row.level || row.variable;
+          tdVar.classList.add(row.level ? "cat-level" : "cat-var");
         }
+        tr.appendChild(tdVar);
+
+        // Values
+        groupCols.forEach(g => {
+          const td = document.createElement("td");
+          td.textContent = row[g] || "-";
+          tr.appendChild(td);
+        });
 
         tbody.appendChild(tr);
       });
