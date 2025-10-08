@@ -150,7 +150,9 @@ function buildCategorical(vars) {
 
         const trace = {
           x: data.categories.map(c => c.category),
-          y: data.categories.flatMap(c => numpy.log(c.points)),
+          y: data.categories.flatMap(c =>
+            c.points.map(p => Math.sign(p) * Math.log(Math.abs(p) + 1))
+          ),
           type: "box",
           boxpoints: "all",
           jitter: 0.4,
@@ -159,7 +161,7 @@ function buildCategorical(vars) {
 
         const layout = {
           title: `Residuals by ${v}`,
-          yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
+          yaxis: { title: "Signed log residuals" }
         };
 
         createPlot("catPlots", `cat-${v}`, [trace], layout);
@@ -167,6 +169,7 @@ function buildCategorical(vars) {
       .catch(err => console.error(`Error building categorical for ${v}:`, err));
   });
 }
+
 
 //-------------------------------------------------------------
 // Linear Regression Results Table
