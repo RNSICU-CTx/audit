@@ -119,11 +119,17 @@ function buildScatter(vars) {
  * @param {Array} yValues - Array of arrays of numeric points (one sub-array per category/bin)
  * @param {Array} labels - Array of labels (category/bin names)
  * @param {string} title - Plot title
+ * @param {boolean} logTransform - Whether to apply log transform to y-values
  */
-function createBoxplot(containerId, plotId, yValues, labels, title) {
+function createBoxplot(containerId, plotId, yValues, labels, title, logTransform=false) {
+  // Optionally log-transform the points (preserve sign for residuals)
+  const transformedY = yValues.map(arr =>
+    arr.map(v => logTransform ? Math.sign(v) * Math.log(Math.abs(v) + 1) : v)
+  );
+
   // Flatten y-values and replicate labels
-  const x = yValues.flatMap((arr, i) => Array(arr.length).fill(labels[i]));
-  const y = yValues.flatMap(arr => arr);
+  const x = transformedY.flatMap((arr, i) => Array(arr.length).fill(labels[i]));
+  const y = transformedY.flatMap(arr => arr);
 
   const trace = {
     x: x,
@@ -143,29 +149,26 @@ function createBoxplot(containerId, plotId, yValues, labels, title) {
 }
 
 // ============================================================
-// Categorical Residuals
+// Categorical Residuals (log-transform optional)
 // ============================================================
-function buildCategorical(vars) {
+function buildCategorical(vars, logTransform=true) {
   vars.forEach(v => {
     fetch(`${API_BASE}/categorical?var=${v}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) return;
 
-        const yValues = data.categories.map(c =>
-          c.points.map(p => Math.sign(p) * Math.log(Math.abs(p) + 1))
-        );
-
+        const yValues = data.categories.map(c => c.points);
         const labels = data.categories.map(c => c.category);
 
-        createBoxplot("catPlots", `cat-${v}`, yValues, labels, `Residuals by ${v}`);
+        createBoxplot("catPlots", `cat-${v}`, yValues, labels, `Residuals by ${v}`, logTransform);
       })
       .catch(err => console.error(`Error building categorical for ${v}:`, err));
   });
 }
 
 // ============================================================
-// Binned Residuals
+// Binned Residuals (keep linear)
 // ============================================================
 function buildBins(vars) {
   vars.forEach(v => {
@@ -177,11 +180,13 @@ function buildBins(vars) {
         const yValues = data.bins.map(b => b.points);
         const labels = data.bins.map(b => b.bin);
 
-        createBoxplot("binPlots", `bins-${v}`, yValues, labels, `${v} (Binned) vs Residuals`);
+        // logTransform = false for binned plots
+        createBoxplot("binPlots", `bins-${v}`, yValues, labels, `${v} (Binned) vs Residuals`, false);
       })
       .catch(err => console.error(`Error building bins for ${v}:`, err));
   });
 }
+
 
 
 //-------------------------------------------------------------
