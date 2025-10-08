@@ -108,43 +108,43 @@ function buildScatter(vars) {
   });
 }
 
-//-------------------------------------------------------------
-// Binned Residuals (Boxplots)
-//-------------------------------------------------------------
-function buildBins(vars) {
-  vars.forEach(v => {
-    fetch(`${API_BASE}/bins?var=${v}&n_bins=10`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) return;
+// ============================================================
+// Shared Helpers for Boxplots
+// ============================================================
 
-        // Flatten points and replicate bin labels for each point
-        const x = data.bins.flatMap(b => Array(b.points.length).fill(b.bin));
-        const y = data.bins.flatMap(b => b.points);
+/**
+ * Create a boxplot with points overlayed
+ * @param {string} containerId - ID of container div
+ * @param {string} plotId - ID for the plot div
+ * @param {Array} yValues - Array of arrays of numeric points (one sub-array per category/bin)
+ * @param {Array} labels - Array of labels (category/bin names)
+ * @param {string} title - Plot title
+ */
+function createBoxplot(containerId, plotId, yValues, labels, title) {
+  // Flatten y-values and replicate labels
+  const x = yValues.flatMap((arr, i) => Array(arr.length).fill(labels[i]));
+  const y = yValues.flatMap(arr => arr);
 
-        const trace = {
-          x: x,
-          y: y,
-          type: "box",
-          boxpoints: "all",
-          jitter: 0.4,
-          name: v
-        };
+  const trace = {
+    x: x,
+    y: y,
+    type: "box",
+    boxpoints: "all",
+    jitter: 0.4,
+    name: title
+  };
 
-        const layout = {
-          title: `${v} (Binned) vs Residuals`,
-          yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
-        };
+  const layout = {
+    title: title,
+    yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
+  };
 
-        createPlot("binPlots", `bins-${v}`, [trace], layout);
-      })
-      .catch(err => console.error(`Error building bins for ${v}:`, err));
-  });
+  createPlot(containerId, plotId, [trace], layout);
 }
 
-//-------------------------------------------------------------
-// Categorical Residuals (Boxplots)
-//-------------------------------------------------------------
+// ============================================================
+// Categorical Residuals
+// ============================================================
 function buildCategorical(vars) {
   vars.forEach(v => {
     fetch(`${API_BASE}/categorical?var=${v}`)
@@ -152,31 +152,34 @@ function buildCategorical(vars) {
       .then(data => {
         if (data.error) return;
 
-        const x = data.categories.flatMap(c =>
-          Array(c.points.length).fill(c.category)
-        );
-
-        const y = data.categories.flatMap(c =>
+        const yValues = data.categories.map(c =>
           c.points.map(p => Math.sign(p) * Math.log(Math.abs(p) + 1))
         );
 
-        const trace = {
-          x: x,
-          y: y,
-          type: "box",
-          boxpoints: "all",
-          jitter: 0.4,
-          name: v
-        };
+        const labels = data.categories.map(c => c.category);
 
-        const layout = {
-          title: `Residuals by ${v}`,
-          yaxis: { title: "Signed log residuals" }
-        };
-
-        createPlot("catPlots", `cat-${v}`, [trace], layout);
+        createBoxplot("catPlots", `cat-${v}`, yValues, labels, `Residuals by ${v}`);
       })
       .catch(err => console.error(`Error building categorical for ${v}:`, err));
+  });
+}
+
+// ============================================================
+// Binned Residuals
+// ============================================================
+function buildBins(vars) {
+  vars.forEach(v => {
+    fetch(`${API_BASE}/bins?var=${v}&n_bins=10`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) return;
+
+        const yValues = data.bins.map(b => b.points);
+        const labels = data.bins.map(b => b.bin);
+
+        createBoxplot("binPlots", `bins-${v}`, yValues, labels, `${v} (Binned) vs Residuals`);
+      })
+      .catch(err => console.error(`Error building bins for ${v}:`, err));
   });
 }
 
