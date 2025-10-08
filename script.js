@@ -148,11 +148,17 @@ function buildCategorical(vars) {
       .then(data => {
         if (data.error) return;
 
+        const x = data.categories.flatMap(c =>
+          Array(c.points.length).fill(c.category)
+        );
+
+        const y = data.categories.flatMap(c =>
+          c.points.map(p => Math.sign(p) * Math.log(Math.abs(p) + 1))
+        );
+
         const trace = {
-          x: data.categories.map(c => c.category),
-          y: data.categories.flatMap(c =>
-            c.points.map(p => Math.sign(p) * Math.log(Math.abs(p) + 1))
-          ),
+          x: x,
+          y: y,
           type: "box",
           boxpoints: "all",
           jitter: 0.4,
