@@ -47,8 +47,8 @@ async function initializeDashboard() {
     const vars = await fetchJSON(`${API_BASE}/variables`);
     if (!vars) throw new Error("Failed to load variables");
     renderSummary();
-    renderKDESection(vars.continuous);
-    renderCategoricalSection(vars.categorical);
+    renderKDESection(document.getElementById("scatterPlots"), vars.continuous);
+    renderCategoricalSection(document.getElementById("catPlots"), vars.categorical);
     renderLinearModels(); 
     attachRawToggle();
   } catch (err) {
@@ -245,8 +245,7 @@ function drawScatterFallback(targetDiv, points, varName, message) {
 // --------------------
 // Categorical predicted mortality boxplots with actual overlay
 // --------------------
-async function renderCategoricalSection(catVars) {
-  const container = document.getElementById("catPlots");
+async function renderCategoricalSection(container, catVars) {
   container.innerHTML = "";
   if (!catVars || catVars.length === 0) {
     container.innerText = "No categorical variables available.";
