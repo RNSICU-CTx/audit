@@ -9,7 +9,37 @@ document.addEventListener("DOMContentLoaded", () => {
   window.lucide.createIcons();
 }
   initializeDashboard();
+
+// Sidebar toggle logic
+  const sidebar = document.getElementById("sidebar");
+  const toggle = document.getElementById("menuToggle");
+
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", () => {
+      if (window.innerWidth < 900) {
+        sidebar.classList.toggle("open");
+      } else {
+        sidebar.classList.toggle("collapsed");
+      }
+    });
+  }
+
+  // Active link highlighting + auto-close on mobile
+  const links = document.querySelectorAll(".sidebar-nav a");
+  links.forEach(link => {
+    link.addEventListener("click", () => {
+      links.forEach(l => l.classList.remove("active"));
+      link.classList.add("active");
+
+      if (window.innerWidth < 900) {
+        sidebar.classList.remove("open");
+      }
+    });
+  });
+
 });
+
+
 
 // --- Initialization ---
 async function initializeDashboard() {
@@ -141,22 +171,26 @@ function drawKDEHeatmap(targetDiv, kde, points, varName) {
       x: x,
       y: y,
       z: z,
-      type: 'heatmap',
-      colorscale: 'Viridis',
+      type: 'contour',
+      colorscale: 'Blues',
+      contours: {
+        coloring: 'lines',   // draw lines instead of filled regions
+        showlabels: true     // label contour levels
+      },
       showscale: true,
-      hoverinfo: 'x+y+z',
-      zsmooth: 'best'
+      hoverinfo: 'x+y+z'
     },
     {
       x: points.map(p => p[varName]),
       y: points.map(p => p.pres),
       mode: 'markers',
-      marker: {size: 4, opacity: 0.45},
+      marker: { size: 4, opacity: 0.45 },
       type: 'scatter',
       name: 'points',
       hoverinfo: 'x+y'
     }
   ];
+
 
   const layout = {
     margin: { t: 30, l: 60, r: 25, b: 60 },
