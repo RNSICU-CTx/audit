@@ -2,322 +2,336 @@
 // Cardiothoracic Surgery Audit Dashboard
 // ============================================================
 
-//-------------------------------------------------------------
-// Config
-//-------------------------------------------------------------
-const API_BASE = "https://stats-api-nh00.onrender.com";
-const Y_AXIS_RANGE = [-4, 4]; // consistent y-axis limits
+const API_BASE = "https://stats-api-nh00.onrender.com"; 
 
-// Default variables — can be dynamically replaced later
-const DASHBOARD_VARS = {
-  summary: {
-    continuous: ["Age", "LVEF", "aus"],
-    categorical: ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"]
-  },
-  boxplot: {
-    continuous: ["Age", "LVEF", "aus"],
-    categorical: ["Sex", "NYHA", "urgency", "surgery", "diabetes", "CKD"]
-  },
-  lm: ["Age", "Sex", "diabetes"]
-};
+document.addEventListener("DOMContentLoaded", () => {
+  lucide && lucide.replace();
+  initializeDashboard();
+});
 
-//-------------------------------------------------------------
-// Helper: build query string from params
-//-------------------------------------------------------------
-function buildQuery(params) {
-  return Object.entries(params)
-    .map(([k, v]) =>
-      Array.isArray(v)
-        ? v.map(val => `${k}=${encodeURIComponent(val)}`).join("&")
-        : `${k}=${encodeURIComponent(v)}`
-    )
-    .join("&");
+// --- Initialization ---
+async function initializeDashboard() {
+  try {
+    const vars = await fetchJSON(`${API_BASE}/variables`);
+    if (!vars) throw new Error("Failed to load variables");
+    renderSummary();
+    renderKDESection(vars.continuous);
+    renderCategoricalSection(vars.categorical);
+    renderLinearModels(); 
+    attachRawToggle();
+  } catch (err) {
+    console.error("Init error:", err);
+    document.getElementById("summaryTableContainer").innerText = "Error loading dashboard: " + err.message;
+  }
 }
 
-//-------------------------------------------------------------
-// Helper: create Plotly plot container + draw plot
-//-------------------------------------------------------------
-function createPlot(containerId, plotId, traces, layout) {
-  const div = document.createElement("div");
-  div.id = plotId;
-  document.getElementById(containerId).appendChild(div);
-  Plotly.newPlot(div.id, traces, layout);
+// --- Fetch helper ---
+async function fetchJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const txt = await res.text();
+    console.warn("Fetch error", url, res.status, txt);
+    throw new Error(`${res.status} ${res.statusText}: ${txt}`);
+  }
+  return res.json();
 }
 
-//-------------------------------------------------------------
-// Summary Statistics Table
-//-------------------------------------------------------------
-function buildSummary(vars) {
-  // Flatten continuous + categorical variables
-  const allVars = [...(vars.continuous || []), ...(vars.categorical || [])];
-
-  const container = document.getElementById("summaryTableContainer");
-  container.innerHTML = "";
-
-  const query = new URLSearchParams();
-  allVars.forEach(v => query.append("vars", v));
-
-  fetch(`${API_BASE}/summary?${query.toString()}`)
-    .then(r => r.json())
-    .then(data => {
-      if (!data || data.length === 0) return;
-
-      // Detect group columns dynamically (e.g., Alive, Dead, Total)
-      const groupCols = Object.keys(data[0]).filter(k => !["variable","type","level"].includes(k));
-
-      const table = document.createElement("table");
-      table.classList.add("summary-table");
-
-      // Header
-      const thead = document.createElement("thead");
-      const trHead = document.createElement("tr");
-      const thEmpty = document.createElement("th");
-      thEmpty.textContent = "";
-      trHead.appendChild(thEmpty);
-
-      groupCols.forEach(g => {
-        const th = document.createElement("th");
-        th.textContent = g;
-        trHead.appendChild(th);
-      });
-      thead.appendChild(trHead);
-      table.appendChild(thead);
-
-      // Body
-      const tbody = document.createElement("tbody");
-
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-
-        // Variable / Level column
-        const tdVar = document.createElement("td");
-        if (row.type === "continuous") {
-          tdVar.textContent = row.variable;
-          tdVar.classList.add("cont-var");
-        } else if (row.type === "categorical") {
-          tdVar.textContent = row.level || row.variable;
-          tdVar.classList.add(row.level ? "cat-level" : "cat-var");
-        }
-        tr.appendChild(tdVar);
-
-        // Values
-        groupCols.forEach(g => {
-          const td = document.createElement("td");
-          td.textContent = row[g] || "-";
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(tbody);
-      container.appendChild(table);
-    })
-    .catch(err => console.error("Error building summary table:", err));
+// --------------------
+// Summary table
+// --------------------
+async function renderSummary() {
+  try {
+    const summary = await fetchJSON(`${API_BASE}/summary`);
+    const container = document.getElementById("summaryTableContainer");
+    container.innerHTML = buildSummaryTableHTML(summary);
+  } catch (e) {
+    console.error("Summary error:", e);
+    document.getElementById("summaryTableContainer").innerText = "Unable to load summary.";
+  }
 }
 
+function buildSummaryTableHTML(summaryRows) {
+  // Build a table similar to previous design
+  const tbl = document.createElement("table");
+  tbl.className = "summary-table";
+  const thead = document.createElement("thead");
+  thead.innerHTML = `<tr><th>Variable</th><th>Level</th><th>Alive</th><th>Dead</th><th>Total</th></tr>`;
+  tbl.appendChild(thead);
+  const tbody = document.createElement("tbody");
 
-//-------------------------------------------------------------
-// Scatter Plots (Residuals vs Continuous Variables)
-//-------------------------------------------------------------
-function buildScatter(vars) {
-  vars.forEach(v => {
-    fetch(`${API_BASE}/scatter?var=${v}`)
-      .then(r => r.json())
-      .then(data => {
-        const trace = {
-          x: data.points.map(p => p[v]),
-          y: data.points.map(p => p.pres),
-          mode: "markers",
-          type: "scatter",
-          name: v,
-          marker: { opacity: 0.7 }
-        };
+  summaryRows.forEach(row => {
+    if (row.type === "continuous") {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="cont-var">${row.variable}</td><td></td>
+        <td>${row.Alive ?? "-"}</td><td>${row.Dead ?? "-"}</td><td>${row.Total ?? "-"}</td>`;
+      tbody.appendChild(tr);
+    } else if (row.type === "categorical" && row.level === null) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="cat-var">${row.variable}</td><td></td><td></td><td></td><td></td>`;
+      tbody.appendChild(tr);
+    } else if (row.type === "categorical") {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="cat-level">${row.variable}</td><td class="cat-level">${row.level}</td>
+        <td>${row.Alive ?? ""}</td><td>${row.Dead ?? ""}</td><td>${row.Total ?? ""}</td>`;
+      tbody.appendChild(tr);
+    }
+  });
 
-        const layout = {
-          title: `${v} vs Residuals`,
-          xaxis: { title: v },
-          yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
-        };
+  tbl.appendChild(tbody);
+  return tbl.outerHTML;
+}
 
-        createPlot("scatterPlots", `scatter-${v}`, [trace], layout);
-      })
-      .catch(err => console.error(`Error building scatter for ${v}:`, err));
+// --------------------
+// KDE / Continuous plotting
+// --------------------
+async function renderKDESection(continuousVars) {
+  const container = document.getElementById("scatterPlots");
+  container.innerHTML = ""; // clear
+
+  if (!continuousVars || continuousVars.length === 0) {
+    container.innerText = "No continuous variables available.";
+    return;
+  }
+
+  // Reuse: small helper to create plot wrapper
+  continuousVars.forEach(async (v) => {
+    try {
+      const wrap = document.createElement("div");
+      wrap.style.marginBottom = "18px";
+      const title = document.createElement("h3");
+      title.style.margin = "6px 0";
+      title.textContent = `Residuals (pres) KDE vs ${v}`;
+      wrap.appendChild(title);
+
+      const plotDiv = document.createElement("div");
+      plotDiv.style.width = "100%";
+      plotDiv.style.height = "420px";
+      wrap.appendChild(plotDiv);
+      container.appendChild(wrap);
+
+      const resp = await fetchJSON(`${API_BASE}/kde?var=${encodeURIComponent(v)}&x_bins=140&y_bins=140`);
+      // If server-side KDE provided (z as nested array) -> use heatmap/contour
+      if (resp.kde && resp.kde.z) {
+        drawKDEHeatmap(plotDiv, resp.kde, resp.points, v);
+      } else {
+        // fallback: scatter of raw points
+        drawScatterFallback(plotDiv, resp.points, v, resp.message);
+      }
+    } catch (err) {
+      console.error("KDE render error for", v, err);
+      const errDiv = document.createElement("div");
+      errDiv.textContent = `Unable to render KDE for ${v}: ${err.message}`;
+      container.appendChild(errDiv);
+    }
   });
 }
 
-// ============================================================
-// Shared Helpers for Boxplots
-// ============================================================
-
-/**
- * Create a boxplot with points overlayed
- * @param {string} containerId - ID of container div
- * @param {string} plotId - ID for the plot div
- * @param {Array} yValues - Array of arrays of numeric points (one sub-array per category/bin)
- * @param {Array} labels - Array of labels (category/bin names)
- * @param {string} title - Plot title
- * @param {boolean} logTransform - Whether to apply log transform to y-values
- */
-function createBoxplot(containerId, plotId, yValues, labels, title, logTransform=false) {
-  // Optionally log-transform the points (preserve sign for residuals)
-  const transformedY = yValues.map(arr =>
-    arr.map(v => logTransform ? Math.sign(v) * Math.log(Math.abs(v) + 1) : v)
-  );
-
-  // Flatten y-values and replicate labels
-  const x = transformedY.flatMap((arr, i) => Array(arr.length).fill(labels[i]));
-  const y = transformedY.flatMap(arr => arr);
-
-  const trace = {
-    x: x,
-    y: y,
-    type: "box",
-    boxpoints: "all",
-    jitter: 0.4,
-    name: title
-  };
+function drawKDEHeatmap(targetDiv, kde, points, varName) {
+  // kde.grid_x (length Nx), kde.grid_y (length Ny), kde.z (Ny x Nx nested list)
+  const x = kde.grid_x;
+  const y = kde.grid_y;
+  const z = kde.z; // array of arrays, shape [Ny][Nx]
+  // Heatmap (density) + scatter overlay (semi-transparent)
+  const data = [
+    {
+      x: x,
+      y: y,
+      z: z,
+      type: 'heatmap',
+      colorscale: 'Viridis',
+      showscale: true,
+      hoverinfo: 'x+y+z',
+      zsmooth: 'best'
+    },
+    {
+      x: points.map(p => p[varName]),
+      y: points.map(p => p.pres),
+      mode: 'markers',
+      marker: {size: 4, opacity: 0.45},
+      type: 'scatter',
+      name: 'points',
+      hoverinfo: 'x+y'
+    }
+  ];
 
   const layout = {
-    title: title,
-    yaxis: { title: "Residuals", range: Y_AXIS_RANGE }
+    margin: { t: 30, l: 60, r: 25, b: 60 },
+    xaxis: { title: varName },
+    yaxis: { title: 'Residual (pres)' },
+    legend: { orientation: 'h' }
   };
 
-  createPlot(containerId, plotId, [trace], layout);
+  Plotly.newPlot(targetDiv, data, layout, {responsive: true});
 }
 
-// ============================================================
-// Categorical Residuals (log-transform optional)
-// ============================================================
-function buildCategorical(vars, logTransform=true) {
-  vars.forEach(v => {
-    fetch(`${API_BASE}/categorical?var=${v}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) return;
-
-        const yValues = data.categories.map(c => c.points);
-        const labels = data.categories.map(c => c.category);
-
-        createBoxplot("catPlots", `cat-${v}`, yValues, labels, `Residuals by ${v}`, logTransform);
-      })
-      .catch(err => console.error(`Error building categorical for ${v}:`, err));
-  });
+function drawScatterFallback(targetDiv, points, varName, message) {
+  const data = [
+    {
+      x: points.map(p => p[varName]),
+      y: points.map(p => p.pres),
+      mode: 'markers',
+      type: 'scatter',
+      marker: {size: 5, opacity: 0.6},
+      name: 'pres vs ' + varName
+    }
+  ];
+  const layout = {
+    margin: { t: 30, l: 60, r: 25, b: 60 },
+    xaxis: { title: varName },
+    yaxis: { title: 'Residual (pres)' },
+    annotations: (message ? [{
+      text: message,
+      showarrow: false,
+      xref: 'paper',
+      yref: 'paper',
+      x: 0, y: 1.08,
+      font: {size: 11, color: '#666'}
+    }] : [])
+  };
+  Plotly.newPlot(targetDiv, data, layout, {responsive: true});
 }
 
-// ============================================================
-// Binned Residuals (keep linear)
-// ============================================================
-function buildBins(vars) {
-  vars.forEach(v => {
-    fetch(`${API_BASE}/bins?var=${v}&n_bins=10`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) return;
+// --------------------
+// Categorical predicted mortality boxplots with actual overlay
+// --------------------
+async function renderCategoricalSection(catVars) {
+  const container = document.getElementById("catPlots");
+  container.innerHTML = "";
+  if (!catVars || catVars.length === 0) {
+    container.innerText = "No categorical variables available.";
+    return;
+  }
 
-        const yValues = data.bins.map(b => b.points);
-        const labels = data.bins.map(b => b.bin);
+  catVars.forEach(async (v) => {
+    try {
+      const wrap = document.createElement("div");
+      wrap.style.marginBottom = "18px";
+      const title = document.createElement("h3");
+      title.style.margin = "6px 0";
+      title.textContent = `Predicted mortality by ${v} (boxplot) with observed mortality point`;
+      wrap.appendChild(title);
 
-        // logTransform = false for binned plots
-        createBoxplot("binPlots", `bins-${v}`, yValues, labels, `${v} (Binned) vs Residuals`, false);
-      })
-      .catch(err => console.error(`Error building bins for ${v}:`, err));
-  });
-}
+      const plotDiv = document.createElement("div");
+      plotDiv.style.width = "100%";
+      plotDiv.style.height = "420px";
+      wrap.appendChild(plotDiv);
+      container.appendChild(wrap);
 
-
-
-//-------------------------------------------------------------
-// Linear Regression Results Table
-//-------------------------------------------------------------
-function buildLM() {
-  const query = buildQuery({ predictors: DASHBOARD_VARS.lm });
-
-  fetch(`${API_BASE}/lm?${query}`)
-    .then(r => r.json())
-    .then(data => {
-      const tbody = document.querySelector("#lmTable tbody");
-      tbody.innerHTML = "";
-
-      if (!data || data.error) {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td colspan="4">No regression results available</td>`;
-        tbody.appendChild(row);
+      const resp = await fetchJSON(`${API_BASE}/category_pred?var=${encodeURIComponent(v)}`);
+      if (!resp || !resp.categories) {
+        plotDiv.innerText = `No category data available for ${v}`;
         return;
       }
-
-      // Handle both dict-style and list-style responses
-      const rows = Array.isArray(data)
-        ? data
-        : Object.keys(data.coef || {}).map(v => ({
-            variable: v,
-            coef: data.coef[v],
-            CI_lower: data.CI_lower[v],
-            CI_upper: data.CI_upper[v],
-            p_value: data.p_value[v]
-          }));
-
-      rows.forEach(row => {
-        const tr = document.createElement("tr");
-        const isSig = row.p_value < 0.05 ? "sig" : "";
-        const ciText = `${row.CI_lower.toFixed(3)} – ${row.CI_upper.toFixed(3)}`;
-        const pText = row.p_value < 0.001 ? "<0.001" : row.p_value.toFixed(3);
-
-        tr.innerHTML = `
-          <td>${row.variable}</td>
-          <td>${row.coef.toFixed(3)}</td>
-          <td>${ciText}</td>
-          <td class="${isSig}">${pText}</td>`;
-        tbody.appendChild(tr);
-      });
-    })
-    .catch(err => {
-      console.error("Error loading regression results:", err);
-      const tbody = document.querySelector("#lmTable tbody");
-      const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="4">Error loading data</td>`;
-      tbody.appendChild(row);
-    });
+      drawCategoryBoxplot(plotDiv, resp.categories, v);
+    } catch (err) {
+      console.error("Categorical render error for", v, err);
+      const errDiv = document.createElement("div");
+      errDiv.textContent = `Unable to render categorical plot for ${v}: ${err.message}`;
+      container.appendChild(errDiv);
+    }
+  });
 }
 
-//-------------------------------------------------------------
-// Raw Data Toggle (De-identified)
-//-------------------------------------------------------------
-function setupRawData() {
-  document.getElementById("toggleRaw").addEventListener("click", () => {
-    const container = document.getElementById("rawDataContainer");
+function drawCategoryBoxplot(targetDiv, categories, varName) {
+  // categories: list of {category, pred_values[], actual_mortality, n, ci_lower, ci_upper, ...}
+  const boxTraces = [];
+  const categoryNames = categories.map(c => c.category);
 
+  categories.forEach((c) => {
+    boxTraces.push({
+      y: c.pred_values,
+      name: c.category,
+      type: 'box',
+      boxpoints: 'outliers',
+      marker: {opacity: 0.6},
+      hovertemplate: "%{y:.3f}<extra>" + c.category + "</extra>"
+    });
+  });
+
+  // Single-point overlay for observed mortality: we use x positions by category index
+  const observed = {
+    x: categoryNames,
+    y: categories.map(c => (c.actual_mortality === null ? null : +c.actual_mortality)),
+    mode: 'markers',
+    marker: {size: 10, symbol: 'diamond', color: 'black'},
+    name: 'Observed mortality',
+    hovertemplate: "%{x}<br>Observed: %{y:.3f}<extra></extra>"
+  };
+
+  const data = [...boxTraces, observed];
+
+  const layout = {
+    margin: { t: 30, l: 80, r: 20, b: 140 },
+    yaxis: { title: 'Predicted mortality (probability)', zeroline: true },
+    xaxis: { title: varName, tickangle: -45, automargin: true },
+    showlegend: true
+  };
+
+  Plotly.newPlot(targetDiv, data, layout, {responsive: true});
+}
+
+// --------------------
+// Linear models table
+// --------------------
+async function renderLinearModels() {
+  try {
+    const rows = await fetchJSON(`${API_BASE}/lm`);
+    const tbody = document.querySelector("#lmTable tbody");
+    tbody.innerHTML = "";
+    if (!Array.isArray(rows)) {
+      tbody.innerHTML = `<tr><td colspan="4">No model results</td></tr>`;
+      return;
+    }
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      const ciText = (r.CI_lower !== undefined && r.CI_upper !== undefined) ? `${r.CI_lower} — ${r.CI_upper}` : "-";
+      const pval = (r.p_value !== undefined) ? r.p_value : "-";
+      tr.innerHTML = `<td>${escapeHtml(r.variable)}</td><td>${escapeHtml(r.coef)}</td><td>${escapeHtml(ciText)}</td><td>${escapeHtml(pval)}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("LM fetch error:", err);
+    const tbody = document.querySelector("#lmTable tbody");
+    tbody.innerHTML = `<tr><td colspan="4">Unable to load regression results.</td></tr>`;
+  }
+}
+
+// --------------------
+// Raw data toggle
+// --------------------
+function attachRawToggle() {
+  const btn = document.getElementById("toggleRaw");
+  const container = document.getElementById("rawDataContainer");
+  const headerRow = document.getElementById("rawDataHeader");
+  const tbody = document.querySelector("#rawDataTable tbody");
+
+  btn.addEventListener("click", async () => {
     if (container.style.display === "none") {
-      container.style.display = "block";
+      // show
+      try {
+        btn.disabled = true;
+        btn.innerText = "Loading...";
+        const rows = await fetchJSON(`${API_BASE}/data`);
+        btn.disabled = false;
+        btn.innerText = "Show / Hide Raw Data";
 
-      if (!container.dataset.loaded) {
-        fetch(`${API_BASE}/data`)
-          .then(r => r.json())
-          .then(data => {
-            const headerRow = document.getElementById("rawDataHeader");
-            const tbody = document.querySelector("#rawDataTable tbody");
-
-            // Build headers
-            Object.keys(data[0]).forEach(col => {
-              const th = document.createElement("th");
-              th.textContent = col;
-              headerRow.appendChild(th);
-            });
-
-            // Build rows
-            data.forEach(row => {
-              const tr = document.createElement("tr");
-              Object.values(row).forEach(val => {
-                const td = document.createElement("td");
-                td.textContent = val;
-                tr.appendChild(td);
-              });
-              tbody.appendChild(tr);
-            });
-
-            container.dataset.loaded = true;
-          })
-          .catch(err => console.error("Error loading raw data:", err));
+        if (!Array.isArray(rows) || rows.length === 0) {
+          headerRow.innerHTML = `<th>No data</th>`;
+          tbody.innerHTML = "";
+        } else {
+          // Build header keys from first row
+          const keys = Object.keys(rows[0]);
+          headerRow.innerHTML = keys.map(k => `<th>${escapeHtml(k)}</th>`).join("");
+          tbody.innerHTML = rows.map(r => `<tr>${keys.map(k => `<td>${escapeHtml(String(r[k] ?? ""))}</td>`).join("")}</tr>`).join("");
+        }
+        container.style.display = "block";
+      } catch (err) {
+        console.error("Raw data load error:", err);
+        btn.disabled = false;
+        btn.innerText = "Show / Hide Raw Data";
+        container.style.display = "block";
+        headerRow.innerHTML = `<th>Error loading data</th>`;
+        tbody.innerHTML = `<tr><td>${escapeHtml(err.message)}</td></tr>`;
       }
     } else {
       container.style.display = "none";
@@ -325,55 +339,14 @@ function setupRawData() {
   });
 }
 
-//-------------------------------------------------------------
-// Initialize Everything After DOM Loads
-//-------------------------------------------------------------
-
-//-------------------------------------------------------------
-// Initialize Dashboard (define globally before DOMContentLoaded)
-//-------------------------------------------------------------
-function initDashboard() {
-  buildSummary(DASHBOARD_VARS.summary);
-  buildScatter(DASHBOARD_VARS.boxplot.continuous);
-  buildBins(DASHBOARD_VARS.boxplot.continuous);
-  buildCategorical(DASHBOARD_VARS.boxplot.categorical);
-  buildLM();
-  setupRawData();
+// --------------------
+// Utilities
+// --------------------
+function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Initialize dashboard visuals & data
-  initDashboard();
-
-  // Initialize lucide icons (render <i data-lucide="..."> into SVGs)
-  if (window.lucide && typeof lucide.createIcons === "function") {
-    lucide.createIcons();
-  }
-
-  // Sidebar toggle logic
-  const sidebar = document.getElementById("sidebar");
-  const toggle = document.getElementById("menuToggle");
-
-  if (toggle && sidebar) {
-    toggle.addEventListener("click", () => {
-      if (window.innerWidth < 900) {
-        sidebar.classList.toggle("open");
-      } else {
-        sidebar.classList.toggle("collapsed");
-      }
-    });
-  }
-
-  // Active link highlighting + auto-close on mobile
-  const links = document.querySelectorAll(".sidebar-nav a");
-  links.forEach(link => {
-    link.addEventListener("click", () => {
-      links.forEach(l => l.classList.remove("active"));
-      link.classList.add("active");
-
-      if (window.innerWidth < 900) {
-        sidebar.classList.remove("open");
-      }
-    });
-  });
-});
