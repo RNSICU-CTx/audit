@@ -116,49 +116,15 @@ function buildSummaryTableHTML(summaryRows) {
 // --------------------
 // KDE / Continuous plotting
 // --------------------
-async function renderKDESection(continuousVars) {
-  const container = document.getElementById("scatterPlots");
-  container.innerHTML = ""; // clear
-
-  if (!continuousVars || continuousVars.length === 0) {
-    container.innerText = "No continuous variables available.";
-    return;
+async function renderKDESection(container, continuousVars) {
+  for (const v of continuousVars) {
+    const plotDiv = document.createElement("div");
+    plotDiv.className = "plot";
+    container.appendChild(plotDiv);
+    renderSmoothResidual(v, plotDiv);
   }
-
-  // Reuse: small helper to create plot wrapper
-  continuousVars.forEach(async (v) => {
-    try {
-      const wrap = document.createElement("div");
-      wrap.style.marginBottom = "18px";
-      const title = document.createElement("h3");
-      title.style.margin = "6px 0";
-      title.textContent = `Residuals (pres) KDE vs ${v}`;
-      wrap.appendChild(title);
-
-      const plotDiv = document.createElement("div");
-      plotDiv.style.width = "100%";
-      plotDiv.style.height = "420px";
-      wrap.appendChild(plotDiv);
-      container.appendChild(wrap);
-
-      const resp = await fetchJSON(`${API_BASE}/kde?var=${encodeURIComponent(v)}&x_bins=140&y_bins=140`);
-      // If server-side KDE provided (z as nested array) -> use heatmap/contour
-      if (resp.kde && resp.kde.z) {
-        drawKDEHeatmap(plotDiv, resp.kde, resp.points, v);
-        console.log("KDE success")
-      } else {
-        // fallback: scatter of raw points
-        drawScatterFallback(plotDiv, resp.points, v, resp.message);
-        console.log("KDE fail")
-      }
-    } catch (err) {
-      console.error("KDE render error for", v, err);
-      const errDiv = document.createElement("div");
-      errDiv.textContent = `Unable to render KDE for ${v}: ${err.message}`;
-      container.appendChild(errDiv);
-    }
-  });
 }
+
 
 function drawKDEHeatmap(targetDiv, kde, points, varName) {
   // kde.grid_x (length Nx), kde.grid_y (length Ny), kde.z (Ny x Nx nested list)
@@ -201,6 +167,53 @@ function drawKDEHeatmap(targetDiv, kde, points, varName) {
 
   Plotly.newPlot(targetDiv, data, layout, {responsive: true});
 }
+
+// --- NEW: Smoothed residual curve ---
+async function renderSmoothResidual(varName, targetDiv) {
+  try {
+    const resp = await fetchJSON(`${API_BASE}/smooth_residual?var=${encodeURIComponent(varName)}&frac=0.3`);
+
+    const ciTrace = {
+      x: [...resp.binned.x, ...resp.binned.x.slice().reverse()],
+      y: [...resp.binned.ci_upper, ...resp.binned.ci_lower.slice().reverse()],
+      fill: 'toself',
+      fillcolor: 'rgba(0, 0, 255, 0.15)',
+      line: { width: 0 },
+      hoverinfo: 'skip',
+      name: '95% CI'
+    };
+
+    const smoothTrace = {
+      x: resp.smooth.x,
+      y: resp.smooth.y,
+      mode: 'lines',
+      line: { width: 3, color: 'blue' },
+      name: 'Smoothed mean residual'
+    };
+
+    const pointsTrace = {
+      x: resp.binned.x,
+      y: resp.binned.mean,
+      mode: 'markers',
+      marker: { color: 'blue', size: 6, symbol: 'circle' },
+      name: 'Bin means'
+    };
+
+    const layout = {
+      margin: { t: 30, l: 60, r: 25, b: 60 },
+      xaxis: { title: varName },
+      yaxis: { title: 'Residual (pres)', zeroline: true },
+      showlegend: true
+    };
+
+    Plotly.newPlot(targetDiv, [ciTrace, smoothTrace, pointsTrace], layout, { responsive: true });
+  } catch (err) {
+    console.error("Smooth residual error:", err);
+    targetDiv.innerHTML = `<p style="color:red;">Error rendering residual curve for ${varName}</p>`;
+  }
+}
+
+
 
 function drawScatterFallback(targetDiv, points, varName, message) {
   const data = [
