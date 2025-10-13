@@ -5,7 +5,9 @@
 const API_BASE = "https://stats-api-nh00.onrender.com"; 
 
 document.addEventListener("DOMContentLoaded", () => {
-  lucide && lucide.replace();
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+  window.lucide.createIcons();
+}
   initializeDashboard();
 });
 
