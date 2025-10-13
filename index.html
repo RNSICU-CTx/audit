@@ -32,11 +32,10 @@
       </div>
     <nav class="sidebar-nav">
       <a href="#overview"><i data-lucide="home"></i><span>Overview</span></a>
-      <a href="#summary"><i data-lucide="bar-chart-2"></i><span>Summary Stats</span></a>
-      <a href="#scatter"><i data-lucide="trending-up"></i><span>Residual KDE (Continuous)</span></a>
-      <!-- bins intentionally left in navigation but removed from rendering logic -->
-      <a href="#categorical"><i data-lucide="layers"></i><span>Categorical Plots</span></a>
-      <a href="#lm"><i data-lucide="cpu"></i><span>Linear Models</span></a>
+      <a href="#summary"><i data-lucide="bar-chart-2"></i><span>Summary Table</span></a>
+      <a href="#scatter"><i data-lucide="trending-up"></i><span>Residual LOWESS Plots</span></a>
+      <a href="#categorical"><i data-lucide="layers"></i><span>Predicted Mortality Boxplots</span></a>
+      <a href="#lm"><i data-lucide="cpu"></i><span>Linear Regression Model</span></a>
       <a href="#raw"><i data-lucide="database"></i><span>Raw Data</span></a>
     </nav>
 
@@ -50,30 +49,23 @@
       </section>
 
       <section id="summary">
-        <h1>Descriptive Statistics</h1>
-        <h2>Summary Statistics</h2>
+        <h1>Exploratory Analysis</h1>
+        <h2>Summary Table</h2>
         <div id="summaryTableContainer"></div> <!-- dynamic table will be inserted here -->
       </section>
 
       <section id="scatter">
-        <h2>Residual KDE vs Continuous Variables</h2>
-        <p id="kdeNote" style="font-size:13px;color:#666;margin-bottom:6px;">Server-side KDE will be used if available (SciPy). If unavailable, raw points are shown.</p>
+        <h2>Continuous Variables: Residual LOWESS Plots</h2>
         <div id="scatterPlots" class="plot-container"></div>
       </section>
 
-      <!-- bins section kept in HTML but we will not populate it in JS (removed from UI per request) -->
-      <section id="bins" style="display:none">
-        <h2>Binned Residuals (Boxplots)</h2>
-        <div id="binPlots" class="plot-container"></div>
-      </section>
-
       <section id="categorical">
-        <h2>Categorical Variables (Predicted mortality boxplots with observed point)</h2>
+        <h2>Categorical Variables: Predicted Mortality Boxplots</h2>
         <div id="catPlots" class="plot-container"></div>
       </section>
 
       <section id="lm">
-        <h2>Linear Regression Results</h2>
+        <h2>Linear Regression Model</h2>
         <table id="lmTable" class="results-table">
           <thead>
             <tr>
