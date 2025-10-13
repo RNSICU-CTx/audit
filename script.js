@@ -146,50 +146,7 @@ async function renderKDESection(container, continuousVars) {
 }
 
 
-
-function drawKDEHeatmap(targetDiv, kde, points, varName) {
-  // kde.grid_x (length Nx), kde.grid_y (length Ny), kde.z (Ny x Nx nested list)
-  const x = kde.grid_x;
-  const y = kde.grid_y;
-  const z = kde.z; // array of arrays, shape [Ny][Nx]
-  // Heatmap (density) + scatter overlay (semi-transparent)
-  const data = [
-    {
-      x: x,
-      y: y,
-      z: z,
-      type: 'contour',
-      colorscale: 'Blues',
-      contours: {
-        coloring: 'lines',   // draw lines instead of filled regions
-        showlabels: true     // label contour levels
-      },
-      showscale: true,
-      hoverinfo: 'x+y+z'
-    },
-    {
-      x: points.map(p => p[varName]),
-      y: points.map(p => p.pres),
-      mode: 'markers',
-      marker: { size: 4, opacity: 0.45 },
-      type: 'scatter',
-      name: 'points',
-      hoverinfo: 'x+y'
-    }
-  ];
-
-
-  const layout = {
-    margin: { t: 30, l: 60, r: 25, b: 60 },
-    xaxis: { title: varName },
-    yaxis: { title: 'Residual (pres)' },
-    legend: { orientation: 'h' }
-  };
-
-  Plotly.newPlot(targetDiv, data, layout, {responsive: true});
-}
-
-// --- NEW: Smoothed residual curve ---
+//Smoothed residual curve ---
 async function renderSmoothResidual(varName, targetDiv) {
   try {
     const resp = await fetchJSON(`${API_BASE}/smooth_residual?var=${encodeURIComponent(varName)}&frac=0.3`);
@@ -235,36 +192,8 @@ async function renderSmoothResidual(varName, targetDiv) {
 }
 
 
-
-function drawScatterFallback(targetDiv, points, varName, message) {
-  const data = [
-    {
-      x: points.map(p => p[varName]),
-      y: points.map(p => p.pres),
-      mode: 'markers',
-      type: 'scatter',
-      marker: {size: 5, opacity: 0.6},
-      name: 'pres vs ' + varName
-    }
-  ];
-  const layout = {
-    margin: { t: 30, l: 60, r: 25, b: 60 },
-    xaxis: { title: varName },
-    yaxis: { title: 'Residual (pres)' },
-    annotations: (message ? [{
-      text: message,
-      showarrow: false,
-      xref: 'paper',
-      yref: 'paper',
-      x: 0, y: 1.08,
-      font: {size: 11, color: '#666'}
-    }] : [])
-  };
-  Plotly.newPlot(targetDiv, data, layout, {responsive: true});
-}
-
 // --------------------
-// Categorical predicted mortality boxplots with actual overlay
+// Categorical predicted mortality boxplots with observed mortality overlay
 // --------------------
 async function renderCategoricalSection(container, catVars) {
   container.innerHTML = "";
@@ -304,47 +233,59 @@ async function renderCategoricalSection(container, catVars) {
 }
 
 function drawCategoryBoxplot(targetDiv, categories, varName) {
-  // categories: list of {category, pred_values[], actual_mortality, n, ci_lower, ci_upper, ...}
-  const boxTraces = [];
+  // categories: list of {category, mean_pred, ci_lower, ci_upper, actual_mortality, n, ...}
+
   const categoryNames = categories.map(c => c.category);
 
-  categories.forEach((c) => {
-    // Convert predicted mortality values to percentages
-    const predPercent = c.pred_values.map(v => v * 100);
-    boxTraces.push({
-      y: predPercent,
-      name: c.category,
-      type: 'box',
-      boxpoints: 'outliers',
-      marker: { opacity: 0.6 },
-      hovertemplate: "%{y:.2f}%<extra>" + c.category + "</extra>"
-    });
-  });
+  // Predicted mean ± 95% CI (convert to %)
+  const meanTrace = {
+    x: categoryNames,
+    y: categories.map(c => c.mean_pred * 100),
+    error_y: {
+      type: 'data',
+      array: categories.map(c => (c.ci_upper - c.mean_pred) * 100),
+      arrayminus: categories.map(c => (c.mean_pred - c.ci_lower) * 100),
+      visible: true,
+      thickness: 1.5,
+      width: 5
+    },
+    mode: 'markers',
+    marker: { size: 10, color: 'steelblue', symbol: 'circle' },
+    name: 'Predicted mean ± 95% CI',
+    hovertemplate:
+      "%{x}<br>Predicted mean: %{y:.2f}%<br>95% CI: " +
+      "%{customdata[0]:.2f}–%{customdata[1]:.2f}%<extra></extra>",
+    customdata: categories.map(c => [
+      c.ci_lower * 100,
+      c.ci_upper * 100
+    ])
+  };
 
-  // Single-point overlay for observed mortality, converted to %
-  const observed = {
+  // Observed mortality (black diamond)
+  const observedTrace = {
     x: categoryNames,
     y: categories.map(c =>
-      c.actual_mortality === null ? null : c.actual_mortality * 100
+      c.actual_mortality == null ? null : c.actual_mortality * 100
     ),
     mode: 'markers',
-    marker: { size: 10, symbol: 'diamond', color: 'black' },
+    marker: { size: 12, symbol: 'diamond', color: 'black' },
     name: 'Observed mortality',
     hovertemplate: "%{x}<br>Observed: %{y:.2f}%<extra></extra>"
   };
 
-  const data = [...boxTraces, observed];
+  const data = [meanTrace, observedTrace];
 
   const layout = {
     margin: { t: 30, l: 80, r: 20, b: 140 },
     yaxis: { title: 'Predicted mortality (%)', zeroline: true },
     xaxis: { title: varName, tickangle: -45, automargin: true },
-    showlegend: true
+    showlegend: true,
+    legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.25 },
+    hovermode: 'closest'
   };
 
   Plotly.newPlot(targetDiv, data, layout, { responsive: true });
 }
-
 
 // --------------------
 // Linear models table
