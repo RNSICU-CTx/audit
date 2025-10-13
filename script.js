@@ -117,6 +117,7 @@ function buildSummaryTableHTML(summaryRows) {
 // KDE / Continuous plotting
 // --------------------
 async function renderKDESection(container, continuousVars) {
+  console.log(continuousVars)
   for (const v of continuousVars) {
     const plotDiv = document.createElement("div");
     plotDiv.className = "plot";
