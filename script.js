@@ -117,14 +117,34 @@ function buildSummaryTableHTML(summaryRows) {
 // KDE / Continuous plotting
 // --------------------
 async function renderKDESection(container, continuousVars) {
-  console.log(continuousVars)
+  if (!Array.isArray(continuousVars)) {
+    console.error("renderKDESection: continuousVars is not an array", continuousVars);
+    return;
+  }
+
+  container.innerHTML = ""; // clear previous plots
+
   for (const v of continuousVars) {
+    const wrap = document.createElement("div");
+    wrap.style.marginBottom = "20px";
+
+    const title = document.createElement("h3");
+    title.textContent = `Residuals vs ${v}`;
+    title.style.margin = "6px 0";
+    wrap.appendChild(title);
+
     const plotDiv = document.createElement("div");
     plotDiv.className = "plot";
-    container.appendChild(plotDiv);
-    renderSmoothResidual(v, plotDiv);
+    plotDiv.style.width = "100%";
+    plotDiv.style.height = "400px";
+    wrap.appendChild(plotDiv);
+
+    container.appendChild(wrap);
+
+    await renderSmoothResidual(v, plotDiv);
   }
 }
+
 
 
 function drawKDEHeatmap(targetDiv, kde, points, varName) {
