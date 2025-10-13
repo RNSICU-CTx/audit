@@ -115,9 +115,11 @@ async function renderKDESection(continuousVars) {
       // If server-side KDE provided (z as nested array) -> use heatmap/contour
       if (resp.kde && resp.kde.z) {
         drawKDEHeatmap(plotDiv, resp.kde, resp.points, v);
+        console.log("KDE success")
       } else {
         // fallback: scatter of raw points
         drawScatterFallback(plotDiv, resp.points, v, resp.message);
+        console.log("KDE fail")
       }
     } catch (err) {
       console.error("KDE render error for", v, err);
@@ -210,7 +212,7 @@ async function renderCategoricalSection(catVars) {
       wrap.style.marginBottom = "18px";
       const title = document.createElement("h3");
       title.style.margin = "6px 0";
-      title.textContent = `Predicted mortality by ${v} (boxplot) with observed mortality point`;
+      title.textContent = `Predicted mortality by ${v}`;
       wrap.appendChild(title);
 
       const plotDiv = document.createElement("div");
@@ -240,37 +242,42 @@ function drawCategoryBoxplot(targetDiv, categories, varName) {
   const categoryNames = categories.map(c => c.category);
 
   categories.forEach((c) => {
+    // Convert predicted mortality values to percentages
+    const predPercent = c.pred_values.map(v => v * 100);
     boxTraces.push({
-      y: c.pred_values,
+      y: predPercent,
       name: c.category,
       type: 'box',
       boxpoints: 'outliers',
-      marker: {opacity: 0.6},
-      hovertemplate: "%{y:.3f}<extra>" + c.category + "</extra>"
+      marker: { opacity: 0.6 },
+      hovertemplate: "%{y:.2f}%<extra>" + c.category + "</extra>"
     });
   });
 
-  // Single-point overlay for observed mortality: we use x positions by category index
+  // Single-point overlay for observed mortality, converted to %
   const observed = {
     x: categoryNames,
-    y: categories.map(c => (c.actual_mortality === null ? null : +c.actual_mortality)),
+    y: categories.map(c =>
+      c.actual_mortality === null ? null : c.actual_mortality * 100
+    ),
     mode: 'markers',
-    marker: {size: 10, symbol: 'diamond', color: 'black'},
+    marker: { size: 10, symbol: 'diamond', color: 'black' },
     name: 'Observed mortality',
-    hovertemplate: "%{x}<br>Observed: %{y:.3f}<extra></extra>"
+    hovertemplate: "%{x}<br>Observed: %{y:.2f}%<extra></extra>"
   };
 
   const data = [...boxTraces, observed];
 
   const layout = {
     margin: { t: 30, l: 80, r: 20, b: 140 },
-    yaxis: { title: 'Predicted mortality (probability)', zeroline: true },
+    yaxis: { title: 'Predicted mortality (%)', zeroline: true },
     xaxis: { title: varName, tickangle: -45, automargin: true },
     showlegend: true
   };
 
-  Plotly.newPlot(targetDiv, data, layout, {responsive: true});
+  Plotly.newPlot(targetDiv, data, layout, { responsive: true });
 }
+
 
 // --------------------
 // Linear models table
